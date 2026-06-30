@@ -632,8 +632,6 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
     a.href = url; a.download = "clairvoyant_reps.csv"; a.click();
     URL.revokeObjectURL(url);
   }
-  var csvBtn = document.getElementById("csv-btn");
-  if (csvBtn) csvBtn.addEventListener("click", csvDownload);
   var csvLink = document.getElementById("csv-link");
   if (csvLink) csvLink.addEventListener("click", csvDownload);
   // Updated ago
@@ -987,7 +985,6 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   <div class="live-bar">
     <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
       <input type="text" id="search-input" placeholder="Search member...">
-      <span class="action-btn" id="csv-btn">CSV</span>
       <span class="action-btn" id="reset-btn">Reset</span>
     </div>
     <div class="live-status">

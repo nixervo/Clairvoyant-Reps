@@ -349,7 +349,6 @@
   <div class="live-bar">
     <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
       <input type="text" id="search-input" placeholder="Search member...">
-      <span class="action-btn" id="csv-btn">CSV</span>
       <span class="action-btn" id="reset-btn">Reset</span>
     </div>
     <div class="live-status">
@@ -368,8 +367,8 @@
   
   <div class="footer">
     <div class="footer-updated" id="updated-ago"></div>
-    Snapshot: 2026-07-01 03:36:36
-    <div class="ref">Ref (30m): 2026-07-01 03:23:26 &middot; Ref (hourly): 2026-07-01 02:01:00 &middot; Ref (daily): 2026-06-30 16:32:13</div>
+    Snapshot: 2026-07-01 03:39:17
+    <div class="ref">Ref (30m): 2026-07-01 03:36:36 &middot; Ref (hourly): 2026-07-01 02:01:00 &middot; Ref (daily): 2026-06-30 16:32:13</div>
     <div class="footer-csv"><a id="csv-link">Download CSV</a></div>
   </div>
 </div>
@@ -555,8 +554,6 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
     a.href = url; a.download = "clairvoyant_reps.csv"; a.click();
     URL.revokeObjectURL(url);
   }
-  var csvBtn = document.getElementById("csv-btn");
-  if (csvBtn) csvBtn.addEventListener("click", csvDownload);
   var csvLink = document.getElementById("csv-link");
   if (csvLink) csvLink.addEventListener("click", csvDownload);
   // Updated ago
