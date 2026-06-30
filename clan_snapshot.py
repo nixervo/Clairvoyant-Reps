@@ -603,7 +603,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   .timer-bar {{
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 10px;
     padding: 12px 20px;
     background: #0f142373;
@@ -612,6 +612,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     border-top: 1px solid #1a1a2e;
     font-size: 15px;
     flex-wrap: wrap;
+    position: relative;
   }}
   .timer-left {{ display: flex; align-items: center; gap: 10px; }}
   .timer-season {{ color: #eab308; font-weight: 700; letter-spacing: 0.5px; }}
@@ -620,7 +621,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   .timer-digits {{ font-variant-numeric: tabular-nums; }}
   .timer-digits span:first-child {{ color: #2dd4bf; font-weight: 600; min-width: 28px; display: inline-block; text-align: center; }}
   .timer-unit {{ color: #888; font-size: 12px; margin-left: 1px; }}
-  .timer-right {{ cursor: pointer; font-size: 12px; color: #888; user-select: none; white-space: nowrap; }}
+  .timer-right {{ position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 12px; color: #888; user-select: none; white-space: nowrap; }}
   .timer-right:hover {{ color: #e94560; }}
   .stats-bar {{
     display: flex;
