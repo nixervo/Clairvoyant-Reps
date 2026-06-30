@@ -292,15 +292,11 @@ def save_changes(changes):
     with open(CHANGES_JSON, "w") as f:
         json.dump(pruned, f)
 
-def detect_renames(prev_members, curr_members, left_names=None, joined_names=None, threshold=RENAME_THRESHOLD):
-    if left_names is None: left_names = set()
-    if joined_names is None: joined_names = set()
+def detect_renames(prev_members, curr_members, threshold=RENAME_THRESHOLD):
     renames = []
     for i in range(min(len(prev_members), len(curr_members))):
         p = prev_members[i]
         c = curr_members[i]
-        if p["name"] in left_names or c["name"] in joined_names:
-            continue
         if p["name"] != c["name"]:
             diff = c["reps"] - p["reps"]
             if 0 <= diff <= threshold:
@@ -990,11 +986,21 @@ def save_snapshot(data):
     if cache_30m and "order" in cache_30m:
         prev_list = [{"name": n, "reps": cache_30m["members"].get(n, 0)} for n in cache_30m["order"]]
         curr_list = [{"name": m["character_name"], "reps": m["member_reputation"]} for m in data["members"]]
-        prev_names = {m["name"] for m in prev_list}
-        curr_names = {m["name"] for m in curr_list}
+        now_ts = now.strftime("%Y-%m-%d %H:%M:%S")
+        new_renames = detect_renames(prev_list, curr_list)
+        for r in new_renames:
+            r["detected_at"] = now_ts
+        existing_pairs = set((r["old"], r["new"]) for r in renames)
+        for r in new_renames:
+            if (r["old"], r["new"]) not in existing_pairs:
+                renames.append(r)
+        save_renames(renames)
+        rename_old = {r["old"] for r in renames}
+        rename_new = {r["new"] for r in renames}
+        prev_names = {m["name"] for m in prev_list} - rename_old
+        curr_names = {m["name"] for m in curr_list} - rename_new
         left_names = prev_names - curr_names
         joined_names = curr_names - prev_names
-        now_ts = now.strftime("%Y-%m-%d %H:%M:%S")
         existing_change_keys = set((c["type"], c["name"]) for c in changes)
         for n in sorted(left_names):
             if ("left", n) not in existing_change_keys:
@@ -1003,14 +1009,6 @@ def save_snapshot(data):
             if ("joined", n) not in existing_change_keys:
                 changes.append({"type": "joined", "name": n, "detected_at": now_ts})
         save_changes(changes)
-        new_renames = detect_renames(prev_list, curr_list, left_names=left_names, joined_names=joined_names)
-        for r in new_renames:
-            r["detected_at"] = now_ts
-        existing_pairs = set((r["old"], r["new"]) for r in renames)
-        for r in new_renames:
-            if (r["old"], r["new"]) not in existing_pairs:
-                renames.append(r)
-        save_renames(renames)
 
     goal_info = compute_goal_info(clan_reputation)
     stats = None
