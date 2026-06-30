@@ -1,3 +1,4 @@
+# Clan reputation snapshot - runs hourly, daily dump at 13:00 GMT+8
 name: Clan Snapshot
 
 on:

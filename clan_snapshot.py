@@ -20,11 +20,21 @@ def fetch_clan():
         return json.loads(resp.read().decode())
 
 SEASON_API = "https://playninjarift.com/api/refresh_time_website.php"
+RANKING_API = "https://playninjarift.com/api/clan_ranking_website.php"
 
 def fetch_season_info():
     req = urllib.request.Request(SEASON_API, headers={"User-Agent": "clan-snapshot/1.0"})
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read().decode())
+
+def fetch_clan_ranking():
+    req = urllib.request.Request(RANKING_API, headers={"User-Agent": "clan-snapshot/1.0"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        data = json.loads(resp.read().decode())
+    for entry in data:
+        if entry["clan_id"] == CLAN_ID:
+            return entry
+    return {}
 
 def get_previous_sheet_names(wb):
     names = [s.title for s in wb.worksheets]
@@ -68,6 +78,28 @@ def save_hourly_cache(members, now):
     }
     with open(HOURLY_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f)
+
+def compute_rolling_avg_daily_gain(filename, before_date):
+    if not os.path.exists(filename):
+        return None
+    wb = load_workbook(filename)
+    names = sorted([s.title for s in wb.worksheets if s.title != "Sheet1" and s.title < before_date])
+    gains = []
+    for i in range(1, len(names)):
+        prev_total = 0
+        curr_total = 0
+        ps = wb[names[i-1]]
+        cs = wb[names[i]]
+        for row in ps.iter_rows(min_row=4, max_col=2, values_only=True):
+            if row[1] is not None:
+                prev_total += int(row[1])
+        for row in cs.iter_rows(min_row=4, max_col=2, values_only=True):
+            if row[1] is not None:
+                curr_total += int(row[1])
+        gains.append(curr_total - prev_total)
+    if not gains:
+        return None
+    return sum(gains) / len(gains)
 
 def compute_changes(members, prev_data):
     prev_names = {m["character_name"] for m in prev_data}
@@ -117,7 +149,7 @@ def write_sheet(ws, data, prev_data, now):
     ws["A2"].font = Font(bold=True, size=11)
     ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
 
-    headers = ["Name", "Reps", "Daily Diff"]
+    headers = ["Name", "Total Reps", "Daily Reps (+1d)"]
     for col_idx, h in enumerate(headers, 1):
         cell = ws.cell(row=3, column=col_idx, value=h)
         cell.font = Font(bold=True)
@@ -148,6 +180,51 @@ def save_xlsx(data, prev_data, now):
     wb.save(EXCEL_FILE)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] Saved sheet '{sheet_name}' to {EXCEL_FILE}")
 
+def save_seasonal_xlsx(members, season_num):
+    filename = f"S{season_num}_ID{CLAN_ID}.xlsx"
+    if os.path.exists(filename):
+        return
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Season {season_num}"
+    header = f"[S{season_num}] Total Reps"
+    ws["A1"] = "Name"
+    ws["B1"] = header
+    ws["A1"].font = Font(bold=True)
+    ws["B1"].font = Font(bold=True)
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws["B1"].alignment = Alignment(horizontal="center", vertical="center")
+    max_name = 10
+    max_reps = 4
+    for idx, m in enumerate(members, 2):
+        name = m["character_name"]
+        reps = m["member_reputation"]
+        ws.cell(row=idx, column=1, value=name).alignment = Alignment(vertical="center")
+        ws.cell(row=idx, column=2, value=reps).alignment = Alignment(horizontal="center", vertical="center")
+        max_name = max(max_name, len(name))
+        max_reps = max(max_reps, len(str(reps)))
+    ws.column_dimensions["A"].width = max_name + 5
+    ws.column_dimensions["B"].width = max_reps + 3
+    wb.save(filename)
+    print(f"Saved seasonal snapshot: {filename}")
+
+def compute_season_projection(clan_reputation, avg_daily_gain, season_end_dt, now):
+    if avg_daily_gain is None or avg_daily_gain <= 0:
+        return None
+    projection = clan_reputation
+    total_days = 0
+    current = now + timedelta(days=1)
+    current = current.replace(hour=0, minute=0, second=0, microsecond=0)
+    while current <= season_end_dt:
+        if current.weekday() >= 5:
+            projection += avg_daily_gain * 2
+        else:
+            projection += avg_daily_gain
+        total_days += 1
+        current += timedelta(days=1)
+    days_left = (season_end_dt - now).days
+    return {"projection": int(round(projection)), "avg_daily": int(round(avg_daily_gain)), "days_left": days_left}
+
 def diff_html(diff_str):
     if diff_str.startswith("+"):
         return f'<span class="up">{diff_str}</span>'
@@ -156,7 +233,7 @@ def diff_html(diff_str):
     else:
         return f'<span class="na">{diff_str}</span>'
 
-def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None):
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None):
     daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -228,6 +305,64 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       <span class="timer-digits"><span id="timer-s">--</span><span class="timer-unit">s</span></span>
     </span>
   </div>"""
+
+    stats_html = ""
+    if stats:
+        stats_html = f"""
+  <div class="stats-bar">
+    <div class="stats-col">
+      <span class="stat-label">Today</span>
+      <span class="stat-val" id="today-gain">+{stats['today_gain']:,}</span>
+      <span class="stat-label">Season Total</span>
+      <span class="stat-val">{stats['season_total']:,}</span>
+    </div>
+    <div class="stats-col">
+      <span class="stat-label">Est. Season Total</span>
+      <span class="stat-val">{stats['projection']:,}</span>
+      <span class="stat-label">Avg/Day &middot; {stats['days_left']}d left</span>
+      <span class="stat-val">{stats['avg_daily']:,}</span>
+    </div>
+  </div>"""
+
+    script_html = ""
+    if season_info:
+        script_html = """<script>
+(function() {
+  var end = new Date(\"""" + season_end_iso + """\").getTime();
+  function tick() {
+    var diff = end - new Date().getTime();
+    if (diff <= 0) { document.getElementById("timer-d").textContent = "0"; document.getElementById("timer-h").textContent = "00"; document.getElementById("timer-m").textContent = "00"; document.getElementById("timer-s").textContent = "00"; return; }
+    document.getElementById("timer-d").textContent = Math.floor(diff / 86400000);
+    document.getElementById("timer-h").textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,"0");
+    document.getElementById("timer-m").textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,"0");
+    document.getElementById("timer-s").textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,"0");
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+(function() {
+  var tbody = document.querySelector("tbody");
+  var defaultRows = tbody.innerHTML;
+  var sortCol = -1, sortDir = 0;
+  var ths = document.querySelectorAll("th");
+  for (var i = 0; i < ths.length; i++) (function(col) {
+    ths[col].addEventListener("click", function() {
+      if (sortCol !== col) { sortCol = col; sortDir = 1; }
+      else { sortDir = (sortDir + 1) % 3; if (sortDir === 0) { tbody.innerHTML = defaultRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; return; } }
+      for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
+      ths[col].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\\u25B2" : "\\u25BC";
+      var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
+      rows.sort(function(a, b) {
+        var va = a.cells[col].textContent.trim(), vb = b.cells[col].textContent.trim();
+        if (col === 0) return sortDir === 1 ? va.localeCompare(vb) : vb.localeCompare(va);
+        var na = parseFloat(va) || -1/0, nb = parseFloat(vb) || -1/0;
+        return sortDir === 1 ? na - nb : nb - na;
+      });
+      for (var r = 0; r < rows.length; r++) tbody.appendChild(rows[r]);
+    });
+  })(i);
+})();
+</script>"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -418,6 +553,29 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   .timer-digits {{ font-variant-numeric: tabular-nums; }}
   .timer-digits span:first-child {{ color: #2dd4bf; font-weight: 600; min-width: 28px; display: inline-block; text-align: center; }}
   .timer-unit {{ color: #888; font-size: 12px; margin-left: 1px; }}
+  .stats-bar {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 14px 20px;
+    background: #0f142373;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid #1a1a2e;
+    flex-wrap: wrap;
+  }}
+  .stats-col {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }}
+  .stat-label {{ color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }}
+  .stat-val {{ color: #e0e0e0; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }}
+  #today-gain {{ color: #4caf50; }}
+  th {{ cursor: pointer; user-select: none; }}
+  th .sort-arrow {{ font-size: 11px; margin-left: 3px; }}
   @media (max-width: 600px) {{
     body {{ padding: 16px 8px; }}
     .header {{ padding: 24px 16px 20px; }}
@@ -432,6 +590,10 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     .archive {{ flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }}
     .archive::-webkit-scrollbar {{ display: none; }}
     .archive a {{ flex-shrink: 0; }}
+    .stats-bar {{ gap: 16px; padding: 12px 16px; }}
+    .stat-val {{ font-size: 15px; }}
+    .stats-col {{ width: 100%; }}
+    .stats-col + .stats-col {{ border-top: 1px solid #1a1a2e; padding-top: 10px; }}
   }}
 </style>
 </head>
@@ -447,10 +609,11 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     </div>
   </div>
   {timer_html}
+  {stats_html}
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Name</th><th>Reps</th><th>Hourly (+1h)</th><th>Daily Diff</th></tr></thead>
+    <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
   </div>
@@ -460,21 +623,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     <div class="ref">{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
   </div>
 </div>
-{f'''<script>
-(function() {{
-  var end = new Date("{season_end_iso}").getTime();
-  function tick() {{
-    var diff = end - new Date().getTime();
-    if (diff <= 0) {{ document.getElementById("timer-d").textContent = "0"; document.getElementById("timer-h").textContent = "00"; document.getElementById("timer-m").textContent = "00"; document.getElementById("timer-s").textContent = "00"; return; }}
-    document.getElementById("timer-d").textContent = Math.floor(diff / 86400000);
-    document.getElementById("timer-h").textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,"0");
-    document.getElementById("timer-m").textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,"0");
-    document.getElementById("timer-s").textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,"0");
-  }}
-  tick();
-  setInterval(tick, 1000);
-}})();
-</script>''' if season_info else ""}
+{script_html}
 </body>
 </html>"""
 
@@ -512,16 +661,35 @@ def save_snapshot(data):
     except Exception:
         season_info = None
 
+    try:
+        ranking = fetch_clan_ranking()
+        clan_reputation = ranking.get("clan_reputation", 0)
+        today_gain = ranking.get("clan_day_points", 0)
+    except Exception:
+        clan_reputation = 0
+        today_gain = 0
+
+    stats = None
+    if season_info:
+        end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=TARGET_TZ)
+        avg_daily = compute_rolling_avg_daily_gain(EXCEL_FILE, sheet_name)
+        proj = compute_season_projection(clan_reputation, avg_daily, end_dt, now)
+        if proj:
+            stats = {"today_gain": today_gain, "season_total": clan_reputation, "projection": proj["projection"], "avg_daily": proj["avg_daily"], "days_left": proj["days_left"]}
+
     if is_daily:
         save_xlsx(data, prev_data, now)
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats)
         save_hourly_cache(data["members"], now)
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats)
         save_hourly_cache(data["members"], now)
+
+    if season_info and now >= end_dt and avg_daily is not None:
+        save_seasonal_xlsx(data["members"], season_info["season"])
 
 def run():
     print("Clan snapshot daemon started. Will run hourly.")
