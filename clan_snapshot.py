@@ -426,13 +426,13 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       <span class="stat-label">Today</span>
       <span class="stat-val" id="today-gain">+{stats['today_gain']:,}</span>
       <span class="stat-label">Season Total</span>
-      <span class="stat-val">{stats['season_total']:,}</span>
+      <span class="stat-val" id="season-total">{stats['season_total']:,}</span>
     </div>
     <div class="stats-col">
       <span class="stat-label">Est. Season Total</span>
-      <span class="stat-val">{stats['projection']:,}</span>
-      <span class="stat-label">Avg/Day &middot; {stats['days_left']}d left</span>
-      <span class="stat-val">{stats['avg_daily']:,}</span>
+      <span class="stat-val" id="est-season">{stats['projection']:,}</span>
+      <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
+      <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
     </div>
   </div>"""
 
@@ -465,6 +465,8 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   setInterval(tick, 1000);
 })();
 window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[750000,"Back Item"],[1000000,"Weapon"],[1600000,"Jutsu"]];
+window.__avgDaily = """ + (str(stats['avg_daily']) if stats else '0') + """;
+window.__seasonEnd = \"""" + season_end_iso + """\";
 (function() {
   var tbody = document.querySelector("tbody");
   window.__originalRows = tbody.innerHTML;
@@ -568,6 +570,21 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
         }
         prev = tiers[ti][0];
       }
+    }
+    if (rk && window.__avgDaily > 0 && window.__seasonEnd) {
+      var seEnd = new Date(window.__seasonEnd).getTime(), nowMs = new Date().getTime();
+      var daysLeft = Math.ceil((seEnd - nowMs) / 86400000);
+      if (daysLeft < 0) daysLeft = 0;
+      var proj = Number(rk.clan_reputation);
+      var cur = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 0, 0, 0, 0);
+      while (cur.getTime() <= seEnd) {
+        proj += cur.getDay() % 6 === 0 ? window.__avgDaily * 2 : window.__avgDaily;
+        cur = new Date(cur.getTime() + 86400000);
+      }
+      var estEl = document.getElementById("est-season");
+      var avgLabel = document.getElementById("avg-label");
+      if (estEl) estEl.textContent = Math.round(proj).toLocaleString();
+      if (avgLabel) avgLabel.textContent = "Avg/Day · " + daysLeft + "d left";
     }
   }
   function refreshData() {
