@@ -704,8 +704,8 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   tr:nth-child(even) td {{ background: rgba(255,255,255,0.015); }}
   tr:hover td {{ background: rgba(233, 69, 96, 0.04); }}
   td.num {{ font-variant-numeric: tabular-nums; }}
-  .up {{ color: #4caf50; }} .up::before {{ content: '\\25B2 '; font-size: 10px; }}
-  .down {{ color: #f44336; }} .down::before {{ content: '\\25BC '; font-size: 10px; }}
+  .up {{ color: #4caf50; }}
+  .down {{ color: #f44336; }}
   .na {{ color: #555; }}
   .changes {{
     background: #0c0c14;
@@ -897,8 +897,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   .old-name {{ color: #f44336; }}
   .rename-arrow {{ color: #e94560; margin: 0 8px; font-size: 16px; }}
   .new-name {{ color: #4caf50; }}
-  td:nth-child(4) .up::before, td:nth-child(4) .down::before,
-  td:nth-child(5) .up::before, td:nth-child(5) .down::before {{ content: none !important; }}
+
 </style>
 </head>
 <body>
