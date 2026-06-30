@@ -19,6 +19,13 @@ def fetch_clan():
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode())
 
+SEASON_API = "https://playninjarift.com/api/refresh_time_website.php"
+
+def fetch_season_info():
+    req = urllib.request.Request(SEASON_API, headers={"User-Agent": "clan-snapshot/1.0"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode())
+
 def get_previous_sheet_names(wb):
     names = [s.title for s in wb.worksheets]
     names.sort()
@@ -149,7 +156,7 @@ def diff_html(diff_str):
     else:
         return f'<span class="na">{diff_str}</span>'
 
-def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes):
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None):
     daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -203,6 +210,24 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 
     hourly_ref = f"Ref (hourly): {hourly_ts}" if hourly_ts else ""
     daily_ref = f"Ref (daily): {prev_timestamp}" if prev_timestamp else ""
+
+    timer_html = ""
+    season_end_iso = ""
+    if season_info:
+        season_num = season_info["season"]
+        end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=TARGET_TZ)
+        season_end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+        timer_html = f"""
+  <div class="timer-bar">
+    <span class="timer-season">Season <span id="season-num">{season_num}</span></span>
+    <span class="timer-sep">&middot;</span>
+    <span class="timer-clock">
+      <span class="timer-digits"><span id="timer-d">--</span><span class="timer-unit">d</span></span>
+      <span class="timer-digits"><span id="timer-h">--</span><span class="timer-unit">h</span></span>
+      <span class="timer-digits"><span id="timer-m">--</span><span class="timer-unit">m</span></span>
+      <span class="timer-digits"><span id="timer-s">--</span><span class="timer-unit">s</span></span>
+    </span>
+  </div>"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -374,6 +399,25 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   }}
   .footer .ref {{ color: #555; font-size: 11px; margin-top: 2px; }}
   .footer a {{ color: #e94560; text-decoration: none; }}
+  .timer-bar {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: #0f142373;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid #1a1a2e;
+    font-size: 15px;
+    flex-wrap: wrap;
+  }}
+  .timer-season {{ color: #eab308; font-weight: 700; letter-spacing: 0.5px; }}
+  .timer-sep {{ color: #444; }}
+  .timer-clock {{ display: flex; align-items: center; gap: 6px; }}
+  .timer-digits {{ font-variant-numeric: tabular-nums; }}
+  .timer-digits span:first-child {{ color: #2dd4bf; font-weight: 600; min-width: 28px; display: inline-block; text-align: center; }}
+  .timer-unit {{ color: #888; font-size: 12px; margin-left: 1px; }}
   @media (max-width: 600px) {{
     body {{ padding: 16px 8px; }}
     .header {{ padding: 24px 16px 20px; }}
@@ -402,6 +446,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       <span>{member_count} members</span>
     </div>
   </div>
+  {timer_html}
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="table-wrap">
   <table>
@@ -415,6 +460,21 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     <div class="ref">{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
   </div>
 </div>
+{f'''<script>
+(function() {{
+  var end = new Date("{season_end_iso}").getTime();
+  function tick() {{
+    var diff = end - new Date().getTime();
+    if (diff <= 0) {{ document.getElementById("timer-d").textContent = "0"; document.getElementById("timer-h").textContent = "00"; document.getElementById("timer-m").textContent = "00"; document.getElementById("timer-s").textContent = "00"; return; }}
+    document.getElementById("timer-d").textContent = Math.floor(diff / 86400000);
+    document.getElementById("timer-h").textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,"0");
+    document.getElementById("timer-m").textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,"0");
+    document.getElementById("timer-s").textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,"0");
+  }}
+  tick();
+  setInterval(tick, 1000);
+}})();
+</script>''' if season_info else ""}
 </body>
 </html>"""
 
@@ -447,15 +507,20 @@ def save_snapshot(data):
         else:
             hourly_diffs[name] = "N/A"
 
+    try:
+        season_info = fetch_season_info()
+    except Exception:
+        season_info = None
+
     if is_daily:
         save_xlsx(data, prev_data, now)
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info)
         save_hourly_cache(data["members"], now)
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info)
         save_hourly_cache(data["members"], now)
 
 def run():
