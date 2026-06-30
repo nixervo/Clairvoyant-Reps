@@ -11,6 +11,7 @@ import base64
 API_URL = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527"
 TARGET_TZ = timezone(timedelta(hours=8))
 EXCEL_FILE = "clan_2527.xlsx"
+HOURLY_CACHE = "_hourly_cache.json"
 CLAN_ID = 2527
 
 def fetch_clan():
@@ -45,6 +46,21 @@ def load_prev_from_xlsx(filename, before_date):
             if row[0] and row[1] is not None:
                 prev_data.append({"character_name": row[0], "member_reputation": int(row[1])})
     return prev_data, prev_timestamp
+
+def load_hourly_cache():
+    if not os.path.exists(HOURLY_CACHE):
+        return {}, None
+    with open(HOURLY_CACHE, encoding="utf-8") as f:
+        c = json.load(f)
+    return c.get("members", {}), c.get("timestamp")
+
+def save_hourly_cache(members, now):
+    cache = {
+        "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "members": {m["character_name"]: m["member_reputation"] for m in members}
+    }
+    with open(HOURLY_CACHE, "w", encoding="utf-8") as f:
+        json.dump(cache, f)
 
 def compute_changes(members, prev_data):
     prev_names = {m["character_name"] for m in prev_data}
@@ -94,7 +110,7 @@ def write_sheet(ws, data, prev_data, now):
     ws["A2"].font = Font(bold=True, size=11)
     ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
 
-    headers = ["Name", "Reps", "Reps Difference"]
+    headers = ["Name", "Reps", "Daily Diff"]
     for col_idx, h in enumerate(headers, 1):
         cell = ws.cell(row=3, column=col_idx, value=h)
         cell.font = Font(bold=True)
@@ -125,8 +141,16 @@ def save_xlsx(data, prev_data, now):
     wb.save(EXCEL_FILE)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] Saved sheet '{sheet_name}' to {EXCEL_FILE}")
 
-def save_html(data, prev_data, prev_timestamp, now, all_dates):
-    rows = compute_diff(data["members"], prev_data)
+def diff_html(diff_str):
+    if diff_str.startswith("+"):
+        return f'<span class="up">{diff_str}</span>'
+    elif diff_str.startswith("-"):
+        return f'<span class="down">{diff_str}</span>'
+    else:
+        return f'<span class="na">{diff_str}</span>'
+
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes):
+    daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
     ts_str = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -143,46 +167,42 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
         with open("favicon.ico", "rb") as f:
             favicon_b64 = base64.b64encode(f.read()).decode()
 
-    def diff_html(diff_str):
-        if diff_str.startswith("+"):
-            return f'<span class="up">{diff_str}</span>'
-        elif diff_str.startswith("-"):
-            return f'<span class="down">{diff_str}</span>'
-        else:
-            return f'<span class="na">{diff_str}</span>'
-
     archive_links = "".join(
         f'<a href="{d}.html" class="{"active" if d == date_str else ""}">{d}</a>'
         for d in sorted(all_dates, reverse=True)
     )
 
     table_rows = "".join(
-        f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diff_str)}</td></tr>"
-        for name, reps, diff_str in rows
+        f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(hourly_diffs.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(daily_diff)}</td></tr>"
+        for name, reps, daily_diff in daily_rows
     )
 
-    left_names, joined_names = compute_changes(data["members"], prev_data)
     changes_html = ""
-    if prev_data and (left_names or joined_names):
-        left_items = "".join(f"<li>{n}</li>" for n in left_names)
-        joined_items = "".join(f"<li>{n}</li>" for n in joined_names)
-        changes_html = f"""
+    if show_changes and prev_data:
+        left_names, joined_names = compute_changes(data["members"], prev_data)
+        if left_names or joined_names:
+            left_items = "".join(f"<li>{n}</li>" for n in left_names)
+            joined_items = "".join(f"<li>{n}</li>" for n in joined_names)
+            changes_html = f"""
   <div class="changes">
     <div class="changes-title">Member Changes (from {prev_timestamp or 'previous snapshot'})</div>
     <div class="changes-cols">
       <div class="changes-col">
         <div class="changes-head left">Left ({len(left_names)})</div>
-        <ul>""".lstrip() + left_items + """</ul>
+        <ul>{left_items}</ul>
       </div>
       <div class="changes-col">
         <div class="changes-head joined">Joined ({len(joined_names)})</div>
-        <ul>""" + joined_items + """</ul>
+        <ul>{joined_items}</ul>
       </div>
     </div>
   </div>"""
 
     logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo" alt="Clairvoyant">' if logo_b64 else ""
     favicon_html = f'<link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,{favicon_b64}">' if favicon_b64 else ""
+
+    hourly_ref = f"Ref (hourly): {hourly_ts}" if hourly_ts else ""
+    daily_ref = f"Ref (daily): {prev_timestamp}" if prev_timestamp else ""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -270,6 +290,7 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
   .table-wrap {{ overflow-x: auto; }}
   table {{
     width: 100%;
+    min-width: 0;
     border-collapse: collapse;
     background: #0c0c14;
   }}
@@ -351,6 +372,7 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
     font-size: 12px;
     border-top: 1px solid #12121e;
   }}
+  .footer .ref {{ color: #555; font-size: 11px; margin-top: 2px; }}
   .footer a {{ color: #e94560; text-decoration: none; }}
   @media (max-width: 600px) {{
     body {{ padding: 16px 8px; }}
@@ -358,9 +380,8 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
     .header h1 {{ font-size: 22px; }}
     .header .sub {{ font-size: 14px; }}
     .logo {{ width: 96px; height: 96px; }}
-    table {{ min-width: 100%; }}
-    th, td {{ padding: 10px 12px; font-size: 13px; }}
-    th:nth-child(3), td:nth-child(3) {{ display: none; }}
+    table {{ min-width: 520px; }}
+    th, td {{ padding: 10px 10px; font-size: 12px; }}
     .changes {{ padding: 16px; }}
     .changes-cols {{ flex-direction: column; gap: 14px; }}
     .changes-col {{ max-width: 100%; }}
@@ -384,14 +405,14 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Name</th><th>Reps</th><th>Reps Difference</th></tr></thead>
+    <thead><tr><th>Name</th><th>Reps</th><th>Hourly (+1h)</th><th>Daily Diff</th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
   </div>
   {changes_html}
   <div class="footer">
-    Snapshot: {ts_str} &middot; Updated daily at 13:01 GMT+8 via
-    <a href="https://github.com/nixervo/Clairvoyant-Reps" target="_blank">GitHub Actions</a>
+    Snapshot: {ts_str}
+    <div class="ref">{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
   </div>
 </div>
 </body>
@@ -402,31 +423,48 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
         f.write(html)
     print(f"[{ts_str}] Saved {index_path}")
 
-    archive_path = f"{date_str}.html"
-    with open(archive_path, "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"[{ts_str}] Saved {archive_path}")
+    if all_dates:
+        archive_path = f"{date_str}.html"
+        with open(archive_path, "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"[{ts_str}] Saved {archive_path}")
 
 def save_snapshot(data):
     now = datetime.now(TARGET_TZ)
+    is_daily = (now.hour == 13)
     sheet_name = now.strftime("%Y-%m-%d")
 
     prev_data, prev_timestamp = load_prev_from_xlsx(EXCEL_FILE, sheet_name)
 
-    save_xlsx(data, prev_data, now)
+    hourly_cache, hourly_ts = load_hourly_cache()
+    hourly_diffs = {}
+    for m in data["members"]:
+        name = m["character_name"]
+        reps = m["member_reputation"]
+        if name in hourly_cache:
+            diff = reps - hourly_cache[name]
+            hourly_diffs[name] = f"+{diff}" if diff > 0 else str(diff)
+        else:
+            hourly_diffs[name] = "N/A"
 
-    existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
-    all_dates = set(existing_html)
-    all_dates.add(sheet_name)
-    save_html(data, prev_data, prev_timestamp, now, sorted(all_dates))
+    if is_daily:
+        save_xlsx(data, prev_data, now)
+        existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
+        all_dates = set(existing_html)
+        all_dates.add(sheet_name)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True)
+        save_hourly_cache(data["members"], now)
+    else:
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False)
+        save_hourly_cache(data["members"], now)
 
 def run():
-    print("Clan snapshot daemon started. Will run at 13:01 GMT+8 daily.")
+    print("Clan snapshot daemon started. Will run hourly.")
     while True:
         now = datetime.now(TARGET_TZ)
-        target = now.replace(hour=13, minute=1, second=0, microsecond=0)
-        if now >= target:
-            target += timedelta(days=1)
+        target = now.replace(minute=1, second=0, microsecond=0)
+        if now.minute >= 1:
+            target += timedelta(hours=1)
         sleep_sec = (target - now).total_seconds()
         time.sleep(sleep_sec)
         try:

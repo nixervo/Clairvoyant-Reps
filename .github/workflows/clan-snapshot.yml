@@ -2,7 +2,7 @@ name: Clan Snapshot
 
 on:
   schedule:
-    - cron: "01 5 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -27,6 +27,6 @@ jobs:
       - run: |
           git config user.name "clan-snapshot-bot"
           git config user.email "bot@clan-snapshot.local"
-          git add clan_2527.xlsx index.html *.html
+          git add clan_2527.xlsx index.html *.html _hourly_cache.json
           git diff --quiet && git diff --staged --quiet || git commit -m "clan snapshot update"
           git push
