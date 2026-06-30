@@ -545,7 +545,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
       if (sv.length >= 2 && rk.clan_reputation !== undefined) sv[1].textContent = Number(rk.clan_reputation).toLocaleString();
     }
     var ft = document.querySelector(".footer");
-    if (ft) { var tn = ft.childNodes[0]; if (tn) tn.textContent = "Snapshot: "+ns; }
+    var st = document.getElementById("snapshot-ts"); if (st) st.textContent = ns;
     var rs = {}; for (var i = 0; i < d.length; i++) rs[d[i].character_name] = d[i].member_reputation;
     var b30 = blk30(nm), b1h = blk1h(nm);
     if (b30 && (!c30 || c30.b !== b30)) localStorage.setItem("nr_30m", JSON.stringify({b: b30, ts: ns, rs: rs}));
@@ -636,12 +636,10 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   if (csvLink) csvLink.addEventListener("click", csvDownload);
   // Updated ago
   function updateAgo() {
-    var ft = document.querySelector(".footer");
+    var st = document.getElementById("snapshot-ts");
     var ua = document.getElementById("updated-ago");
-    if (!ft || !ua) return;
-    var tn = ft.childNodes[0];
-    if (!tn) return;
-    var txt = tn.textContent || tn.nodeValue || "";
+    if (!st || !ua) return;
+    var txt = st.textContent;
     var m = txt.match(/(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})/);
     if (!m) return;
     var snap = new Date(m[1].replace(" ", "T") + "+08:00").getTime();
@@ -1003,7 +1001,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   {possible_html}
   <div class="footer">
     <div class="footer-updated" id="updated-ago"></div>
-    Snapshot: {ts_str}
+    Snapshot: <span id="snapshot-ts">{ts_str}</span>
     <div class="ref">{ref_30m}{" &middot; " if ref_30m and (hourly_ref or daily_ref) else ""}{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
     <div class="footer-csv"><a id="csv-link">Download CSV</a></div>
   </div>
