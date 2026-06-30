@@ -21,6 +21,8 @@ GOAL_TIERS = [
     (1000000, "Weapon"),
     (1600000, "Jutsu"),
 ]
+RENAME_JSON = "_renames.json"
+RENAME_THRESHOLD = 300
 
 def fetch_clan():
     req = urllib.request.Request(API_URL, headers={"User-Agent": "clan-snapshot/1.0"})
@@ -96,7 +98,8 @@ def load_30m_cache():
 def save_30m_cache(members, now):
     cache = {
         "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
-        "members": {m["character_name"]: m["member_reputation"] for m in members}
+        "members": {m["character_name"]: m["member_reputation"] for m in members},
+        "order": [m["character_name"] for m in members],
     }
     with open(CACHE_30M, "w", encoding="utf-8") as f:
         json.dump(cache, f)
@@ -260,6 +263,31 @@ def compute_goal_info(clan_reputation):
         prev_name = name
     return None
 
+def load_renames():
+    try:
+        with open(RENAME_JSON) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def save_renames(renames):
+    now = datetime.now(TARGET_TZ)
+    cutoff = now - timedelta(hours=72)
+    pruned = [r for r in renames if r.get("detected_at", "") >= cutoff.strftime("%Y-%m-%d %H:%M:%S")]
+    with open(RENAME_JSON, "w") as f:
+        json.dump(pruned, f)
+
+def detect_renames(prev_members, curr_members, threshold=RENAME_THRESHOLD):
+    renames = []
+    for i in range(min(len(prev_members), len(curr_members))):
+        p = prev_members[i]
+        c = curr_members[i]
+        if p["name"] != c["name"]:
+            diff = c["reps"] - p["reps"]
+            if 0 <= diff <= threshold:
+                renames.append({"old": p["name"], "new": c["name"]})
+    return renames
+
 def diff_html(diff_str):
     if diff_str.startswith("+"):
         return f'<span class="up">{diff_str}</span>'
@@ -270,7 +298,7 @@ def diff_html(diff_str):
     else:
         return f'<span class="na">{diff_str}</span>'
 
-def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None, goal_info=None):
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None, goal_info=None, renames=None):
     daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -318,6 +346,15 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
         <ul>{joined_items}</ul>
       </div>
     </div>
+  </div>"""
+
+    renamed_html = ""
+    if renames:
+        rename_items = "".join(f'<li><span class="old-name">{r["old"]}</span> <span class="rename-arrow">&rarr;</span> <span class="new-name">{r["new"]}</span></li>' for r in renames)
+        renamed_html = f"""
+  <div class="changes">
+    <div class="changes-title">Renamed ({len(renames)})</div>
+    <div class="renamed-list"><ul>{rename_items}</ul></div>
   </div>"""
 
     logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo" alt="Clairvoyant">' if logo_b64 else ""
@@ -822,6 +859,12 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   .goal-info .goal-next {{ color: #e94560; font-weight: 600; }}
   .goal-info .goal-num {{ color: #ccc; font-variant-numeric: tabular-nums; }}
   td:first-child, th:first-child {{ width: 28px; min-width: 28px; text-align: center; color: #666; font-size: 12px; }}
+  .renamed-list ul {{ list-style: none; padding: 0; margin: 0; text-align: center; }}
+  .renamed-list li {{ padding: 4px 0; font-size: 14px; color: #ccc; border-bottom: 1px solid #14141f; }}
+  .renamed-list li:last-child {{ border-bottom: none; }}
+  .old-name {{ color: #f44336; }}
+  .rename-arrow {{ color: #e94560; margin: 0 8px; font-size: 16px; }}
+  .new-name {{ color: #4caf50; }}
   td:nth-child(4) .up::before, td:nth-child(4) .down::before,
   td:nth-child(5) .up::before, td:nth-child(5) .down::before {{ content: none !important; }}
 </style>
@@ -855,6 +898,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   </table>
   </div>
   {changes_html}
+  {renamed_html}
   <div class="footer">
     Snapshot: {ts_str}
     <div class="ref">{ref_30m}{" &middot; " if ref_30m and (hourly_ref or daily_ref) else ""}{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
@@ -921,6 +965,20 @@ def save_snapshot(data):
         clan_reputation = 0
         today_gain = 0
 
+    renames = load_renames()
+    if cache_30m and "order" in cache_30m:
+        prev_list = [{"name": n, "reps": cache_30m["members"].get(n, 0)} for n in cache_30m["order"]]
+        curr_list = [{"name": m["character_name"], "reps": m["member_reputation"]} for m in data["members"]]
+        new_renames = detect_renames(prev_list, curr_list)
+        now_ts = now.strftime("%Y-%m-%d %H:%M:%S")
+        for r in new_renames:
+            r["detected_at"] = now_ts
+        existing_pairs = set((r["old"], r["new"]) for r in renames)
+        for r in new_renames:
+            if (r["old"], r["new"]) not in existing_pairs:
+                renames.append(r)
+        save_renames(renames)
+
     goal_info = compute_goal_info(clan_reputation)
     stats = None
     if season_info:
@@ -937,9 +995,9 @@ def save_snapshot(data):
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, renames=renames)
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, renames=renames)
 
     save_30m_cache(data["members"], now)
     if is_hourly_mark:
