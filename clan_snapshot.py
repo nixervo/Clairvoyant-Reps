@@ -730,6 +730,8 @@ def save_snapshot(data):
 
 def run():
     print("Clan snapshot daemon started. Running every 30 minutes.")
+    os.system('git config user.name "clan-snapshot-bot"')
+    os.system('git config user.email "bot@clan-snapshot.local"')
     while True:
         now = datetime.now(TARGET_TZ)
         if now.minute < 1:
