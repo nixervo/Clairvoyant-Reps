@@ -183,7 +183,7 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{clan_name} - Clan Snapshot</title>
+<title>{clan_name} [Reps]</title>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   body {{
