@@ -405,8 +405,8 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       var row = n2r[name]; if (!row) continue;
       var cel = row.cells;
       cel[1].textContent = rep;
-      cel[2].innerHTML = c30 && c30.rs && c30.rs[name] !== undefined ? dh(rep - c30.rs[name]) : '<span class="na">N/A</span>';
-      cel[3].innerHTML = c1h && c1h.rs && c1h.rs[name] !== undefined ? dh(rep - c1h.rs[name]) : '<span class="na">N/A</span>';
+      if (c30 && c30.rs && c30.rs[name] !== undefined) cel[2].innerHTML = dh(rep - c30.rs[name]);
+      if (c1h && c1h.rs && c1h.rs[name] !== undefined) cel[3].innerHTML = dh(rep - c1h.rs[name]);
     }
     if (rk) {
       var te = document.getElementById("today-gain");
