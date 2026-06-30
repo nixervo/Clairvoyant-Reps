@@ -240,24 +240,23 @@ def save_html(data, prev_data, now, all_dates):
   th {{
     background: #0f0f1e;
     padding: 14px 18px;
-    text-align: left;
+    text-align: center;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #e94560;
     font-weight: 600;
   }}
-  th:last-child, td:last-child {{ text-align: right; }}
   td {{
     padding: 11px 18px;
     border-bottom: 1px solid #14141f;
     font-size: 14px;
     color: #ccc;
+    text-align: center;
   }}
   tr:nth-child(even) td {{ background: rgba(255,255,255,0.015); }}
   tr:hover td {{ background: rgba(233, 69, 96, 0.04); }}
-  td.num {{ text-align: center; font-variant-numeric: tabular-nums; }}
-  td:last-child {{ text-align: right; }}
+  td.num {{ font-variant-numeric: tabular-nums; }}
   .up {{ color: #4caf50; }} .up::before {{ content: '\\25B2 '; font-size: 10px; }}
   .down {{ color: #f44336; }} .down::before {{ content: '\\25BC '; font-size: 10px; }}
   .na {{ color: #555; }}
