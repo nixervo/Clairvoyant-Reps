@@ -360,13 +360,13 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 })();
 (function() {
   var tbody = document.querySelector("tbody");
-  var defaultRows = tbody.innerHTML;
+  window.__defaultRows = tbody.innerHTML;
   var sortCol = -1, sortDir = 0;
   var ths = document.querySelectorAll("th");
   for (var i = 0; i < ths.length; i++) (function(col) {
     ths[col].addEventListener("click", function() {
       if (sortCol !== col) { sortCol = col; sortDir = 1; }
-      else { sortDir = (sortDir + 1) % 3; if (sortDir === 0) { tbody.innerHTML = defaultRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; return; } }
+      else { sortDir = (sortDir + 1) % 3; if (sortDir === 0) { tbody.innerHTML = window.__defaultRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; return; } }
       for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
       ths[col].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\\u25B2" : "\\u25BC";
       var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
@@ -379,6 +379,46 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       for (var r = 0; r < rows.length; r++) tbody.appendChild(rows[r]);
     });
   })(i);
+})();
+(function() {
+  var API = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527", RK = "https://playninjarift.com/api/clan_ranking_website.php";
+  var tb = document.querySelector("tbody"), names = [], rws = tb.querySelectorAll("tr");
+  for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[0].textContent.trim());
+  function pad(n) { return n < 10 ? "0"+n : ""+n; }
+  function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
+  function fj(u) { return fetch(u,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).catch(function(){return null;}); }
+  function dh(v) { return v > 0 ? '<span class="up">+'+v+"</span>" : v < 0 ? '<span class="down">'+v+"</span>" : '<span class="na">0</span>'; }
+  function blk30(m) { return m <= 1 ? "01" : (m >= 31 && m <= 32 ? "31" : null); }
+  function blk1h(m) { return m <= 1 ? "01" : null; }
+  function upd(d, rk) {
+    var n = new Date(), nm = n.getMinutes(), ns = ts();
+    var lm = {}; for (var i = 0; i < d.length; i++) lm[d[i].character_name] = d[i].member_reputation;
+    var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[0].textContent.trim()] = a[i];
+    var c30 = null, c1h = null; try { c30 = JSON.parse(localStorage.getItem("nr_30m")); c1h = JSON.parse(localStorage.getItem("nr_1h")); } catch(e) {}
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i], rep = lm[name]; if (rep === undefined) continue;
+      var row = n2r[name]; if (!row) continue;
+      var cel = row.cells;
+      cel[1].textContent = rep;
+      cel[2].innerHTML = c30 && c30.rs && c30.rs[name] !== undefined ? dh(rep - c30.rs[name]) : '<span class="na">N/A</span>';
+      cel[3].innerHTML = c1h && c1h.rs && c1h.rs[name] !== undefined ? dh(rep - c1h.rs[name]) : '<span class="na">N/A</span>';
+    }
+    if (rk) {
+      var te = document.getElementById("today-gain");
+      if (te && rk.clan_day_points !== undefined) te.textContent = "+"+Number(rk.clan_day_points).toLocaleString();
+      var sv = document.querySelectorAll(".stats-col .stat-val");
+      if (sv.length >= 2 && rk.clan_reputation !== undefined) sv[1].textContent = Number(rk.clan_reputation).toLocaleString();
+    }
+    var ft = document.querySelector(".footer");
+    if (ft) { var tn = ft.childNodes[0]; if (tn) tn.textContent = "Snapshot: "+ns; }
+    var rs = {}; for (var i = 0; i < d.length; i++) rs[d[i].character_name] = d[i].member_reputation;
+    var b30 = blk30(nm), b1h = blk1h(nm);
+    if (b30 && (!c30 || c30.b !== b30)) localStorage.setItem("nr_30m", JSON.stringify({b: b30, ts: ns, rs: rs}));
+    if (b1h && (!c1h || c1h.b !== b1h)) localStorage.setItem("nr_1h", JSON.stringify({b: b1h, ts: ns, rs: rs}));
+    window.__defaultRows = tb.innerHTML;
+  }
+  Promise.all([fj(API), fj(RK)]).then(function(r){if(r[0]&&r[0].members)upd(r[0].members,r[1]);});
+  setInterval(function(){Promise.all([fj(API),fj(RK)]).then(function(r){if(r[0]&&r[0].members)upd(r[0].members,r[1]);});},60000);
 })();
 </script>"""
 
