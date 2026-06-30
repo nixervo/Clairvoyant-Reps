@@ -138,6 +138,11 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
         with open(logo_path, "rb") as f:
             logo_b64 = base64.b64encode(f.read()).decode()
 
+    favicon_b64 = ""
+    if os.path.exists("favicon.ico"):
+        with open("favicon.ico", "rb") as f:
+            favicon_b64 = base64.b64encode(f.read()).decode()
+
     def diff_html(diff_str):
         if diff_str.startswith("+"):
             return f'<span class="up">{diff_str}</span>'
@@ -177,12 +182,14 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
   </div>"""
 
     logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo" alt="Clairvoyant">' if logo_b64 else ""
+    favicon_html = f'<link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,{favicon_b64}">' if favicon_b64 else ""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{favicon_html}
 <title>{clan_name} [Reps]</title>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -219,10 +226,10 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
   }}
   @keyframes shimmer {{ 0%,100% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} }}
   .logo {{
-    width: 88px; height: 88px;
+    width: 132px; height: 132px;
     object-fit: contain;
-    margin-bottom: 12px;
-    filter: drop-shadow(0 0 12px rgba(233, 69, 96, 0.25));
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 16px rgba(233, 69, 96, 0.3));
   }}
   .header h1 {{
     font-size: 30px;
@@ -350,7 +357,7 @@ def save_html(data, prev_data, prev_timestamp, now, all_dates):
     .header {{ padding: 24px 16px 20px; }}
     .header h1 {{ font-size: 22px; }}
     .header .sub {{ font-size: 14px; }}
-    .logo {{ width: 64px; height: 64px; }}
+    .logo {{ width: 96px; height: 96px; }}
     table {{ min-width: 100%; }}
     th, td {{ padding: 10px 12px; font-size: 13px; }}
     th:nth-child(3), td:nth-child(3) {{ display: none; }}
