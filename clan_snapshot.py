@@ -194,14 +194,14 @@ def save_html(data, prev_data, now, all_dates):
     filter: drop-shadow(0 0 12px rgba(233, 69, 96, 0.25));
   }}
   .header h1 {{
-    font-size: 26px;
+    font-size: 30px;
     font-weight: 700;
     color: #fff;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
   }}
   .header .sub {{
-    font-size: 14px;
+    font-size: 17px;
     color: #888;
     display: flex;
     justify-content: center;
@@ -211,7 +211,6 @@ def save_html(data, prev_data, now, all_dates):
   .header .sub span {{ color: #aaa; }}
   .archive {{
     display: flex;
-    flex-wrap: wrap;
     gap: 6px;
     justify-content: center;
     padding: 14px 20px;
@@ -241,7 +240,7 @@ def save_html(data, prev_data, now, all_dates):
     background: #0f0f1e;
     padding: 14px 18px;
     text-align: center;
-    font-size: 11px;
+    font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #e94560;
@@ -272,9 +271,15 @@ def save_html(data, prev_data, now, all_dates):
   @media (max-width: 600px) {{
     body {{ padding: 16px 8px; }}
     .header {{ padding: 24px 16px 20px; }}
-    .header h1 {{ font-size: 20px; }}
+    .header h1 {{ font-size: 22px; }}
+    .header .sub {{ font-size: 14px; }}
     .logo {{ width: 64px; height: 64px; }}
+    table {{ min-width: 100%; }}
     th, td {{ padding: 10px 12px; font-size: 13px; }}
+    th:nth-child(3), td:nth-child(3) {{ display: none; }}
+    .archive {{ flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }}
+    .archive::-webkit-scrollbar {{ display: none; }}
+    .archive a {{ flex-shrink: 0; }}
   }}
 </style>
 </head>
