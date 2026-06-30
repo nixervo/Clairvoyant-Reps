@@ -25,8 +25,9 @@ def get_previous_sheet_names(wb):
 
 def load_prev_from_xlsx(filename, before_date):
     prev_data = []
+    prev_timestamp = None
     if not os.path.exists(filename):
-        return prev_data
+        return prev_data, prev_timestamp
     wb = load_workbook(filename)
     prev_names = [s.title for s in wb.worksheets]
     prev_names.sort()
@@ -37,10 +38,20 @@ def load_prev_from_xlsx(filename, before_date):
             break
     if prev_sheet_name and prev_sheet_name in wb.sheetnames:
         ps = wb[prev_sheet_name]
+        raw = ps["A2"].value
+        if raw:
+            prev_timestamp = raw.replace("Timestamp: ", "")
         for row in ps.iter_rows(min_row=4, max_col=2, values_only=True):
             if row[0] and row[1] is not None:
                 prev_data.append({"character_name": row[0], "member_reputation": int(row[1])})
-    return prev_data
+    return prev_data, prev_timestamp
+
+def compute_changes(members, prev_data):
+    prev_names = {m["character_name"] for m in prev_data}
+    today_names = {m["character_name"] for m in members}
+    left_names = sorted(prev_names - today_names)
+    joined_names = sorted(today_names - prev_names)
+    return left_names, joined_names
 
 def compute_diff(members, prev_data):
     prev_map = {m["character_name"]: m["member_reputation"] for m in prev_data}
@@ -114,7 +125,7 @@ def save_xlsx(data, prev_data, now):
     wb.save(EXCEL_FILE)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] Saved sheet '{sheet_name}' to {EXCEL_FILE}")
 
-def save_html(data, prev_data, now, all_dates):
+def save_html(data, prev_data, prev_timestamp, now, all_dates):
     rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -144,6 +155,26 @@ def save_html(data, prev_data, now, all_dates):
         f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diff_str)}</td></tr>"
         for name, reps, diff_str in rows
     )
+
+    left_names, joined_names = compute_changes(data["members"], prev_data)
+    changes_html = ""
+    if prev_data and (left_names or joined_names):
+        left_items = "".join(f"<li>{n}</li>" for n in left_names)
+        joined_items = "".join(f"<li>{n}</li>" for n in joined_names)
+        changes_html = f"""
+  <div class="changes">
+    <div class="changes-title">Member Changes (from {prev_timestamp or 'previous snapshot'})</div>
+    <div class="changes-cols">
+      <div class="changes-col">
+        <div class="changes-head left">Left ({len(left_names)})</div>
+        <ul>""".lstrip() + left_items + """</ul>
+      </div>
+      <div class="changes-col">
+        <div class="changes-head joined">Joined ({len(joined_names)})</div>
+        <ul>""" + joined_items + """</ul>
+      </div>
+    </div>
+  </div>"""
 
     logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo" alt="Clairvoyant">' if logo_b64 else ""
 
@@ -259,6 +290,52 @@ def save_html(data, prev_data, now, all_dates):
   .up {{ color: #4caf50; }} .up::before {{ content: '\\25B2 '; font-size: 10px; }}
   .down {{ color: #f44336; }} .down::before {{ content: '\\25BC '; font-size: 10px; }}
   .na {{ color: #555; }}
+  .changes {{
+    background: #0c0c14;
+    padding: 20px 24px;
+    border-top: 1px solid #14141f;
+  }}
+  .changes-title {{
+    font-size: 13px;
+    color: #e94560;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    text-align: center;
+  }}
+  .changes-cols {{
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }}
+  .changes-col {{
+    flex: 1;
+    max-width: 320px;
+  }}
+  .changes-head {{
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: center;
+  }}
+  .changes-head.left {{ color: #f44336; }}
+  .changes-head.joined {{ color: #4caf50; }}
+  .changes-col ul {{
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+  }}
+  .changes-col li {{
+    padding: 4px 0;
+    font-size: 14px;
+    color: #ccc;
+    border-bottom: 1px solid #14141f;
+  }}
+  .changes-col li:last-child {{ border-bottom: none; }}
   .footer {{
     text-align: center;
     padding: 18px 20px;
@@ -277,6 +354,9 @@ def save_html(data, prev_data, now, all_dates):
     table {{ min-width: 100%; }}
     th, td {{ padding: 10px 12px; font-size: 13px; }}
     th:nth-child(3), td:nth-child(3) {{ display: none; }}
+    .changes {{ padding: 16px; }}
+    .changes-cols {{ flex-direction: column; gap: 14px; }}
+    .changes-col {{ max-width: 100%; }}
     .archive {{ flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }}
     .archive::-webkit-scrollbar {{ display: none; }}
     .archive a {{ flex-shrink: 0; }}
@@ -301,6 +381,7 @@ def save_html(data, prev_data, now, all_dates):
     <tbody>{table_rows}</tbody>
   </table>
   </div>
+  {changes_html}
   <div class="footer">
     Snapshot: {ts_str} &middot; Updated daily at 13:01 GMT+8 via
     <a href="https://github.com/nixervo/Clairvoyant-Reps" target="_blank">GitHub Actions</a>
@@ -323,14 +404,14 @@ def save_snapshot(data):
     now = datetime.now(TARGET_TZ)
     sheet_name = now.strftime("%Y-%m-%d")
 
-    prev_data = load_prev_from_xlsx(EXCEL_FILE, sheet_name)
+    prev_data, prev_timestamp = load_prev_from_xlsx(EXCEL_FILE, sheet_name)
 
     save_xlsx(data, prev_data, now)
 
     existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
     all_dates = set(existing_html)
     all_dates.add(sheet_name)
-    save_html(data, prev_data, now, sorted(all_dates))
+    save_html(data, prev_data, prev_timestamp, now, sorted(all_dates))
 
 def run():
     print("Clan snapshot daemon started. Will run at 13:01 GMT+8 daily.")

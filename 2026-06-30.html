@@ -110,6 +110,52 @@
   .up { color: #4caf50; } .up::before { content: '\25B2 '; font-size: 10px; }
   .down { color: #f44336; } .down::before { content: '\25BC '; font-size: 10px; }
   .na { color: #555; }
+  .changes {
+    background: #0c0c14;
+    padding: 20px 24px;
+    border-top: 1px solid #14141f;
+  }
+  .changes-title {
+    font-size: 13px;
+    color: #e94560;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .changes-cols {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }
+  .changes-col {
+    flex: 1;
+    max-width: 320px;
+  }
+  .changes-head {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .changes-head.left { color: #f44336; }
+  .changes-head.joined { color: #4caf50; }
+  .changes-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+  }
+  .changes-col li {
+    padding: 4px 0;
+    font-size: 14px;
+    color: #ccc;
+    border-bottom: 1px solid #14141f;
+  }
+  .changes-col li:last-child { border-bottom: none; }
   .footer {
     text-align: center;
     padding: 18px 20px;
@@ -128,6 +174,9 @@
     table { min-width: 100%; }
     th, td { padding: 10px 12px; font-size: 13px; }
     th:nth-child(3), td:nth-child(3) { display: none; }
+    .changes { padding: 16px; }
+    .changes-cols { flex-direction: column; gap: 14px; }
+    .changes-col { max-width: 100%; }
     .archive { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .archive::-webkit-scrollbar { display: none; }
     .archive a { flex-shrink: 0; }
@@ -149,11 +198,12 @@
   <div class="table-wrap">
   <table>
     <thead><tr><th>Name</th><th>Reps</th><th>Reps Difference</th></tr></thead>
-    <tbody><tr><td>Xylota [NvL]</td><td class="num">142</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Kosuke Ueki X</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Mery</td><td class="num">45</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | iMuiz</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>GON</td><td class="num">138</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | iMuiz X</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>2</td><td class="num">33</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>warrior</td><td class="num">296</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Eucresia X</td><td class="num">210</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Nasi Goreng Kampung</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>OROCHIMARU</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Mahsuri</td><td class="num">800</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 006</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 007</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 008</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 009</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 010</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Parameswara</td><td class="num">671</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Hang Tuah</td><td class="num">663</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Tok JÃ nggut</td><td class="num">583</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>SagÃ©</td><td class="num">544</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Elavoth</td><td class="num">761</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Dracoth</td><td class="num">707</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Summoth</td><td class="num">634</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Maximoth</td><td class="num">558</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 001</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Shadow</td><td class="num">535</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Assassin</td><td class="num">534</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Zenith</td><td class="num">386</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Astraphel</td><td class="num">410</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Noir</td><td class="num">325</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Jork</td><td class="num">466</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Lotus</td><td class="num">55</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Deucedrag</td><td class="num">100</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>iZengotsou</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Heracoth</td><td class="num">469</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 002</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 003</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>1</td><td class="num">48</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>3</td><td class="num">86</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Player</td><td class="num">294</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Meteorx</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Player</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>4</td><td class="num">86</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>DiNoDoN</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Ryugai</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>PuNch</td><td class="num">326</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Sleeping</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Ryzeee</td><td class="num">337</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Aluphiee</td><td class="num">331</td><td class="num"><span class="na">N/A</span></td></tr></tbody>
+    <tbody><tr><td>Xylota [NvL]</td><td class="num">142</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Kosuke Ueki X</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Mery</td><td class="num">45</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | iMuiz</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>GON</td><td class="num">213</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | iMuiz X</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>2</td><td class="num">33</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>warrior</td><td class="num">296</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Eucresia X</td><td class="num">220</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Nasi Goreng Kampung</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>OROCHIMARU</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Mahsuri</td><td class="num">800</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 006</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 007</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 008</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 009</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 010</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Parameswara</td><td class="num">671</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Hang Tuah</td><td class="num">663</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Tok JÃ nggut</td><td class="num">583</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>SagÃ©</td><td class="num">544</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Elavoth</td><td class="num">761</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Dracoth</td><td class="num">707</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Summoth</td><td class="num">634</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Maximoth</td><td class="num">558</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 001</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Shadow</td><td class="num">535</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Assassin</td><td class="num">534</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Zenith</td><td class="num">386</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Astraphel</td><td class="num">410</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Noir</td><td class="num">325</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Jork</td><td class="num">466</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Lotus</td><td class="num">55</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Deucedrag</td><td class="num">100</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>iZengotsou</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Heracoth</td><td class="num">469</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 002</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>MY | Player 003</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>1</td><td class="num">123</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>3</td><td class="num">161</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Player</td><td class="num">294</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Meteorx</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Player</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>4</td><td class="num">86</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>DiNoDoN</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Ryugai</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>PuNch</td><td class="num">336</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Sleeping</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Ryzeee</td><td class="num">337</td><td class="num"><span class="na">N/A</span></td></tr><tr><td>Aluphiee</td><td class="num">331</td><td class="num"><span class="na">N/A</span></td></tr></tbody>
   </table>
   </div>
+  
   <div class="footer">
-    Snapshot: 2026-06-30 13:23:32 &middot; Updated daily at 13:01 GMT+8 via
+    Snapshot: 2026-06-30 13:29:13 &middot; Updated daily at 13:01 GMT+8 via
     <a href="https://github.com/nixervo/Clairvoyant-Reps" target="_blank">GitHub Actions</a>
   </div>
 </div>
