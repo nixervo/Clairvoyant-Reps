@@ -6,6 +6,7 @@ from openpyxl.styles import Font, Alignment
 import json
 import time
 import sys
+import base64
 
 API_URL = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527"
 TARGET_TZ = timezone(timedelta(hours=8))
@@ -118,15 +119,21 @@ def save_html(data, prev_data, now, all_dates):
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
     ts_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    member_count = len(data["members"])
 
-    def css_color(diff_str):
+    logo_b64 = ""
+    logo_path = "clan_logo.png"
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode()
+
+    def diff_html(diff_str):
         if diff_str.startswith("+"):
-            return "#4caf50"
-        elif diff_str == "N/A":
-            return "#888"
+            return f'<span class="up">{diff_str}</span>'
         elif diff_str.startswith("-"):
-            return "#f44336"
-        return "#888"
+            return f'<span class="down">{diff_str}</span>'
+        else:
+            return f'<span class="na">{diff_str}</span>'
 
     archive_links = "".join(
         f'<a href="{d}.html" class="{"active" if d == date_str else ""}">{d}</a>'
@@ -134,13 +141,11 @@ def save_html(data, prev_data, now, all_dates):
     )
 
     table_rows = "".join(
-        f"""<tr>
-          <td>{name}</td>
-          <td class="num">{reps}</td>
-          <td class="num" style="color:{css_color(diff_str)}">{diff_str}</td>
-        </tr>"""
+        f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diff_str)}</td></tr>"
         for name, reps, diff_str in rows
     )
+
+    logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo" alt="Clairvoyant">' if logo_b64 else ""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -152,91 +157,148 @@ def save_html(data, prev_data, now, all_dates):
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   body {{
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #0d0d0d;
+    background: #080810;
     color: #e0e0e0;
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    padding: 40px 16px;
+    padding: 32px 16px;
   }}
-  .container {{ max-width: 900px; width: 100%; }}
+  .container {{
+    max-width: 960px;
+    width: 100%;
+    box-shadow: 0 0 40px rgba(233, 69, 96, 0.06), 0 8px 32px rgba(0,0,0,0.5);
+    border-radius: 16px;
+    overflow: hidden;
+  }}
   .header {{
     text-align: center;
-    padding: 28px 20px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    border-radius: 12px 12px 0 0;
-    border-bottom: 3px solid #e94560;
+    padding: 32px 24px 24px;
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a30 50%, #0d1b2a 100%);
+    position: relative;
+    overflow: hidden;
   }}
-  .header h1 {{ font-size: 22px; color: #fff; margin-bottom: 6px; }}
-  .header p {{ font-size: 14px; color: #aaa; }}
+  .header::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #e94560, #ff6b8a, #e94560);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }}
+  @keyframes shimmer {{ 0%,100% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} }}
+  .logo {{
+    width: 88px; height: 88px;
+    object-fit: contain;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 12px rgba(233, 69, 96, 0.25));
+  }}
+  .header h1 {{
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }}
+  .header .sub {{
+    font-size: 14px;
+    color: #888;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }}
+  .header .sub span {{ color: #aaa; }}
   .archive {{
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     justify-content: center;
-    padding: 12px 20px;
-    background: #161616;
-    border-bottom: 1px solid #222;
+    padding: 14px 20px;
+    background: #0c0c18;
+    border-bottom: 1px solid #1a1a2e;
+    border-top: 1px solid #1a1a2e;
   }}
   .archive a {{
-    color: #888;
+    color: #777;
     text-decoration: none;
-    font-size: 13px;
-    padding: 4px 10px;
-    border-radius: 4px;
-    transition: 0.2s;
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid #1a1a2e;
+    transition: 0.25s;
   }}
-  .archive a:hover {{ background: #222; color: #fff; }}
-  .archive a.active {{ color: #e94560; font-weight: 700; background: #1a1a2e; }}
+  .archive a:hover {{ border-color: #e94560; color: #fff; background: rgba(233, 69, 96, 0.08); }}
+  .archive a.active {{ border-color: #e94560; color: #fff; background: #e94560; font-weight: 600; }}
+  .table-wrap {{ overflow-x: auto; }}
   table {{
     width: 100%;
     border-collapse: collapse;
-    background: #111;
-    border-radius: 0 0 12px 12px;
-    overflow: hidden;
+    background: #0c0c14;
   }}
+  thead {{ position: sticky; top: 0; z-index: 1; }}
   th {{
-    background: #1a1a2e;
-    padding: 12px 16px;
+    background: #0f0f1e;
+    padding: 14px 18px;
     text-align: left;
-    font-size: 13px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     color: #e94560;
+    font-weight: 600;
   }}
-  th:nth-child(2), th:nth-child(3) {{ text-align: center; }}
+  th:last-child, td:last-child {{ text-align: right; }}
   td {{
-    padding: 10px 16px;
-    border-bottom: 1px solid #1a1a2e;
+    padding: 11px 18px;
+    border-bottom: 1px solid #14141f;
     font-size: 14px;
+    color: #ccc;
   }}
-  tr:nth-child(even) td {{ background: #0d0d0d; }}
-  tr:hover td {{ background: #1a1a2e; }}
+  tr:nth-child(even) td {{ background: rgba(255,255,255,0.015); }}
+  tr:hover td {{ background: rgba(233, 69, 96, 0.04); }}
   td.num {{ text-align: center; font-variant-numeric: tabular-nums; }}
+  td:last-child {{ text-align: right; }}
+  .up {{ color: #4caf50; }} .up::before {{ content: '\\25B2 '; font-size: 10px; }}
+  .down {{ color: #f44336; }} .down::before {{ content: '\\25BC '; font-size: 10px; }}
+  .na {{ color: #555; }}
   .footer {{
     text-align: center;
-    padding: 20px;
-    color: #555;
+    padding: 18px 20px;
+    background: #08080f;
+    color: #444;
     font-size: 12px;
+    border-top: 1px solid #12121e;
   }}
   .footer a {{ color: #e94560; text-decoration: none; }}
+  @media (max-width: 600px) {{
+    body {{ padding: 16px 8px; }}
+    .header {{ padding: 24px 16px 20px; }}
+    .header h1 {{ font-size: 20px; }}
+    .logo {{ width: 64px; height: 64px; }}
+    th, td {{ padding: 10px 12px; font-size: 13px; }}
+  }}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
+    {logo_html}
     <h1>{clan_name}</h1>
-    <p>Clan ID: {CLAN_ID}</p>
+    <div class="sub">
+      <span>Clan ID: {CLAN_ID}</span>
+      <span>&middot;</span>
+      <span>{member_count} members</span>
+    </div>
   </div>
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
+  <div class="table-wrap">
   <table>
-    <thead>
-      <tr><th>Name</th><th>Reps</th><th>Reps Difference</th></tr>
-    </thead>
+    <thead><tr><th>Name</th><th>Reps</th><th>Reps Difference</th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
+  </div>
   <div class="footer">
-    Snapshot: {ts_str} &mdash; Auto-updated daily at 13:01 GMT+8 via
+    Snapshot: {ts_str} &middot; Updated daily at 13:01 GMT+8 via
     <a href="https://github.com/nixervo/Clairvoyant-Reps" target="_blank">GitHub Actions</a>
   </div>
 </div>
