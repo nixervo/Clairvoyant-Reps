@@ -226,7 +226,7 @@ def save_html(data, prev_data, now, all_dates):
 <div class="container">
   <div class="header">
     <h1>{clan_name}</h1>
-    <p>Clan ID: {CLAN_ID} &mdash; Snapshot: {ts_str}</p>
+    <p>Clan ID: {CLAN_ID}</p>
   </div>
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <table>
@@ -236,7 +236,7 @@ def save_html(data, prev_data, now, all_dates):
     <tbody>{table_rows}</tbody>
   </table>
   <div class="footer">
-    Auto-updated daily at 13:01 GMT+8 via
+    Snapshot: {ts_str} &mdash; Auto-updated daily at 13:01 GMT+8 via
     <a href="https://github.com/nixervo/Clairvoyant-Reps" target="_blank">GitHub Actions</a>
   </div>
 </div>
