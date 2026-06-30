@@ -485,6 +485,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
     var sr = tbody.querySelectorAll("tr");
     for (var ri = 0; ri < sr.length; ri++) sr[ri].cells[0].textContent = ri + 1;
   }
+  window.__resetSort = function() { sortCol = -1; sortDir = 0; applySort(); };
   for (var i = 0; i < ths.length; i++) (function(col) {
     ths[col].addEventListener("click", function() {
       if (sortCol !== col) { sortCol = col; sortDir = 1; }
@@ -590,6 +591,68 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
     var q = this.value.toLowerCase(), r = tb.querySelectorAll("tr");
     for(var i=0;i<r.length;i++)r[i].style.display=r[i].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";
   });
+  // Click-to-copy
+  var nameCells = tb.querySelectorAll("td:nth-child(2)");
+  for (var i = 0; i < nameCells.length; i++) (function(cell) {
+    cell.style.cursor = "pointer";
+    cell.title = "Click to copy name";
+    cell.addEventListener("click", function() {
+      var name = this.textContent.trim();
+      navigator.clipboard.writeText(name).then(function() {
+        var toast = document.createElement("span");
+        toast.className = "copied-toast";
+        toast.textContent = "Copied!";
+        toast.style.opacity = "1";
+        cell.style.position = "relative";
+        cell.appendChild(toast);
+        setTimeout(function() { toast.style.opacity = "0"; setTimeout(function() { toast.remove(); }, 300); }, 1500);
+      }).catch(function() {});
+    });
+  })(nameCells[i]);
+  // Reset sort
+  var resetBtn = document.getElementById("reset-btn");
+  if (resetBtn) resetBtn.addEventListener("click", function() {
+    localStorage.removeItem("nr_sort");
+    if (window.__resetSort) window.__resetSort();
+  });
+  // CSV export
+  function csvDownload() {
+    var rows = tb.querySelectorAll("tr"), csv = "Rank,Name,Total Reps,1/2 Hour,Hourly,Daily\\n";
+    for (var i = 0; i < rows.length; i++) {
+      var cells = rows[i].cells, vals = [];
+      for (var j = 0; j < cells.length; j++) {
+        var v = cells[j].textContent.trim().replace(/"/g, '""');
+        vals.push('"' + v + '"');
+      }
+      csv += vals.join(",") + "\\n";
+    }
+    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "clairvoyant_reps.csv"; a.click();
+    URL.revokeObjectURL(url);
+  }
+  var csvBtn = document.getElementById("csv-btn");
+  if (csvBtn) csvBtn.addEventListener("click", csvDownload);
+  var csvLink = document.getElementById("csv-link");
+  if (csvLink) csvLink.addEventListener("click", csvDownload);
+  // Updated ago
+  function updateAgo() {
+    var ft = document.querySelector(".footer");
+    var ua = document.getElementById("updated-ago");
+    if (!ft || !ua) return;
+    var tn = ft.childNodes[0];
+    if (!tn) return;
+    var txt = tn.textContent || tn.nodeValue || "";
+    var m = txt.match(/(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})/);
+    if (!m) return;
+    var snap = new Date(m[1].replace(" ", "T") + "+08:00").getTime();
+    var now = new Date().getTime();
+    var diff = Math.floor((now - snap) / 60000);
+    ua.textContent = "Updated " + (diff < 1 ? "just now" : diff + "m ago");
+  }
+  updateAgo();
+  setInterval(updateAgo, 30000);
 })();
 </script>"""
 
@@ -897,7 +960,13 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   .old-name {{ color: #f44336; }}
   .rename-arrow {{ color: #e94560; margin: 0 8px; font-size: 16px; }}
   .new-name {{ color: #4caf50; }}
-
+  .action-btn {{ cursor: pointer; font-size: 12px; color: #888; padding: 4px 10px; border-radius: 4px; border: 1px solid #1a1a2e; background: #0f0f1e; user-select: none; white-space: nowrap; }}
+  .action-btn:hover {{ border-color: #e94560; color: #e94560; }}
+  .footer-updated {{ color: #555; font-size: 11px; margin: 2px 0; }}
+  .footer-csv {{ margin-top: 8px; }}
+  .footer-csv a {{ color: #e94560; text-decoration: none; font-size: 12px; cursor: pointer; }}
+  .footer-csv a:hover {{ text-decoration: underline; }}
+  .copied-toast {{ position: absolute; background: #e94560; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 10; }}
 </style>
 </head>
 <body>
@@ -916,7 +985,11 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   {goal_html}
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="live-bar">
-    <input type="text" id="search-input" placeholder="Search member...">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
+      <input type="text" id="search-input" placeholder="Search member...">
+      <span class="action-btn" id="csv-btn">CSV</span>
+      <span class="action-btn" id="reset-btn">Reset</span>
+    </div>
     <div class="live-status">
       <span class="status-dot wait" id="status-dot"></span>
       <span id="status-text">Idle</span>
@@ -932,8 +1005,10 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   {renamed_html}
   {possible_html}
   <div class="footer">
+    <div class="footer-updated" id="updated-ago"></div>
     Snapshot: {ts_str}
     <div class="ref">{ref_30m}{" &middot; " if ref_30m and (hourly_ref or daily_ref) else ""}{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
+    <div class="footer-csv"><a id="csv-link">Download CSV</a></div>
   </div>
 </div>
 {script_html}
