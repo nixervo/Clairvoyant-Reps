@@ -22,9 +22,10 @@ jobs:
 
       - run: python clan_snapshot.py --once
 
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "clan snapshot update"
-          commit_user_name: "clan-snapshot-bot"
-          commit_user_email: "bot@clan-snapshot.local"
-          file_pattern: "clan_2527.xlsx"
+      - run: |
+          git config user.name "clan-snapshot-bot"
+          git config user.email "bot@clan-snapshot.local"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git add clan_2527.xlsx
+          git diff --quiet && git diff --staged --quiet || git commit -m "clan snapshot update"
+          git push
