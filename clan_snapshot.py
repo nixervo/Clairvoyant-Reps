@@ -14,6 +14,13 @@ EXCEL_FILE = "clan_2527.xlsx"
 HOURLY_CACHE = "_hourly_cache.json"
 CACHE_30M = "_30m_cache.json"
 CLAN_ID = 2527
+GOAL_TIERS = [
+    (100000, "5 Stamina Rolls"),
+    (500000, "20 Stamina Rolls"),
+    (750000, "Back Item"),
+    (1000000, "Weapon"),
+    (1600000, "Jutsu"),
+]
 
 def fetch_clan():
     req = urllib.request.Request(API_URL, headers={"User-Agent": "clan-snapshot/1.0"})
@@ -240,6 +247,19 @@ def compute_season_projection(clan_reputation, avg_daily_gain, season_end_dt, no
     days_left = (season_end_dt - now).days
     return {"projection": int(round(projection)), "avg_daily": int(round(avg_daily_gain)), "days_left": days_left}
 
+def compute_goal_info(clan_reputation):
+    prev = 0
+    prev_name = ""
+    for threshold, name in GOAL_TIERS:
+        if clan_reputation < threshold:
+            progress = clan_reputation - prev
+            total = threshold - prev
+            pct = (progress / total) * 100 if total > 0 else 0
+            return {"next_name": name, "next_threshold": threshold, "next_remaining": threshold - clan_reputation, "pct": pct, "prev_threshold": prev, "clan_reputation": clan_reputation, "prev_name": prev_name}
+        prev = threshold
+        prev_name = name
+    return None
+
 def diff_html(diff_str):
     if diff_str.startswith("+"):
         return f'<span class="up">{diff_str}</span>'
@@ -248,7 +268,7 @@ def diff_html(diff_str):
     else:
         return f'<span class="na">{diff_str}</span>'
 
-def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None):
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None, goal_info=None):
     daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -273,8 +293,8 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 
     diffs_30m_map = diff_30m.get("diffs", {}) if isinstance(diff_30m, dict) else {}
     table_rows = "".join(
-        f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diffs_30m_map.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(hourly_diffs.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(daily_diff)}</td></tr>"
-        for name, reps, daily_diff in daily_rows
+        f"<tr><td class=\"num\">{i+1}</td><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diffs_30m_map.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(hourly_diffs.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(daily_diff)}</td></tr>"
+        for i, (name, reps, daily_diff) in enumerate(daily_rows)
     )
 
     changes_html = ""
@@ -345,6 +365,18 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     </div>
   </div>"""
 
+    goal_html = ""
+    if goal_info:
+        pct = goal_info["pct"]
+        goal_html = f"""
+  <div class="goal-bar">
+    <div class="goal-track"><div class="goal-fill" style="width:{pct:.1f}%"></div></div>
+    <div class="goal-info">
+      <span>Next: <span class="goal-next">{goal_info['next_name']}</span> &middot; {pct:.1f}%</span>
+      <span class="goal-num">{goal_info['clan_reputation']:,} / {goal_info['next_threshold']:,}</span>
+    </div>
+  </div>"""
+
     script_html = ""
     if season_info:
         script_html = """<script>
@@ -361,6 +393,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   tick();
   setInterval(tick, 1000);
 })();
+window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[750000,"Back Item"],[1000000,"Weapon"],[1600000,"Jutsu"]];
 (function() {
   var tbody = document.querySelector("tbody");
   window.__defaultRows = tbody.innerHTML;
@@ -373,11 +406,13 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
     rows.sort(function(a, b) {
       var va = a.cells[sortCol].textContent.trim(), vb = b.cells[sortCol].textContent.trim();
-      if (sortCol === 0) return sortDir === 1 ? va.localeCompare(vb) : vb.localeCompare(va);
+      if (sortCol === 1) return sortDir === 1 ? va.localeCompare(vb) : vb.localeCompare(va);
       var na = parseFloat(va) || -1/0, nb = parseFloat(vb) || -1/0;
       return sortDir === 1 ? na - nb : nb - na;
     });
     for (var r = 0; r < rows.length; r++) tbody.appendChild(rows[r]);
+    var sr = tbody.querySelectorAll("tr");
+    for (var ri = 0; ri < sr.length; ri++) sr[ri].cells[0].textContent = ri + 1;
   }
   for (var i = 0; i < ths.length; i++) (function(col) {
     ths[col].addEventListener("click", function() {
@@ -392,7 +427,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 (function() {
   var API = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527", RK = "https://playninjarift.com/api/clan_ranking_website.php";
   var tb = document.querySelector("tbody"), names = [], rws = tb.querySelectorAll("tr");
-  for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[0].textContent.trim());
+  for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[1].textContent.trim());
   var autoSeconds = 60, autoEl = document.getElementById("auto-seconds"), searchEl = document.getElementById("search-input"), dotEl = document.getElementById("status-dot"), statusEl = document.getElementById("status-text");
   function pad(n) { return n < 10 ? "0"+n : ""+n; }
   function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
@@ -404,7 +439,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     autoSeconds = 60;
     var n = new Date(), nm = n.getMinutes(), ns = ts();
     var lm = {}; for (var i = 0; i < d.length; i++) lm[d[i].character_name] = d[i].member_reputation;
-    var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[0].textContent.trim()] = a[i];
+    var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
     var c30 = null, c1h = null; try { c30 = JSON.parse(localStorage.getItem("nr_30m")); c1h = JSON.parse(localStorage.getItem("nr_1h")); } catch(e) {}
     for (var i = 0; i < names.length; i++) {
       var name = names[i], rep = lm[name]; if (rep === undefined) continue;
@@ -425,7 +460,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       }
     }
     a = tb.querySelectorAll("tr"); n2r = {};
-    for (var i = 0; i < a.length; i++) n2r[a[i].cells[0].textContent.trim()] = a[i];
+    for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
     for (var i = 0; i < names.length; i++) {
       var row = n2r[names[i]];
       if (row && lm[names[i]] === undefined) row.className = "left-row";
@@ -443,6 +478,24 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     if (b30 && (!c30 || c30.b !== b30)) localStorage.setItem("nr_30m", JSON.stringify({b: b30, ts: ns, rs: rs}));
     if (b1h && (!c1h || c1h.b !== b1h)) localStorage.setItem("nr_1h", JSON.stringify({b: b1h, ts: ns, rs: rs}));
     window.__defaultRows = tb.innerHTML;
+    var sr = tb.querySelectorAll("tr");
+    for (var ri = 0; ri < sr.length; ri++) sr[ri].cells[0].textContent = ri + 1;
+    if (rk && rk.clan_reputation !== undefined) {
+      var rep = Number(rk.clan_reputation), prev = 0, tiers = window.__goalTiers;
+      for (var ti = 0; ti < tiers.length; ti++) {
+        if (rep < tiers[ti][0]) {
+          var pct = ((rep - prev) / (tiers[ti][0] - prev)) * 100;
+          var fel = document.querySelector(".goal-fill");
+          var nel = document.querySelector(".goal-info .goal-num");
+          var nel2 = document.querySelector(".goal-info .goal-next");
+          if (fel) fel.style.width = pct.toFixed(1) + "%";
+          if (nel) nel.textContent = rep.toLocaleString() + " / " + tiers[ti][0].toLocaleString();
+          if (nel2) nel2.textContent = tiers[ti][1];
+          break;
+        }
+        prev = tiers[ti][0];
+      }
+    }
   }
   function refreshData() {
     if (dotEl) dotEl.className = "status-dot wait";
@@ -464,7 +517,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   if(autoEl)autoEl.parentElement.addEventListener("click",function(){autoSeconds=60;refreshData();});
   if(searchEl)searchEl.addEventListener("input",function(){
     var q = this.value.toLowerCase(), r = tb.querySelectorAll("tr");
-    for(var i=0;i<r.length;i++)r[i].style.display=r[i].cells[0].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";
+    for(var i=0;i<r.length;i++)r[i].style.display=r[i].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";
   });
 })();
 </script>"""
@@ -737,6 +790,36 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   tr.new-row td {{ animation: fadeIn 0.5s ease; }}
   @keyframes fadeIn {{ from {{ opacity: 0; background: rgba(233,69,96,0.1); }} to {{ opacity: 1; background: transparent; }} }}
   tr.left-row td {{ opacity: 0.35; }}
+  .goal-bar {{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 20px;
+    background: #0c0c18;
+    border-top: 1px solid #1a1a2e;
+  }}
+  .goal-track {{
+    width: 100%;
+    height: 16px;
+    background: #14141f;
+    border-radius: 8px;
+    overflow: hidden;
+  }}
+  .goal-fill {{
+    height: 100%;
+    background: linear-gradient(90deg, #e94560, #ff6b8a);
+    border-radius: 8px;
+    transition: width 0.5s ease;
+  }}
+  .goal-info {{
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+  }}
+  .goal-info .goal-next {{ color: #e94560; font-weight: 600; }}
+  .goal-info .goal-num {{ color: #ccc; font-variant-numeric: tabular-nums; }}
+  td:first-child, th:first-child {{ width: 28px; min-width: 28px; text-align: center; color: #666; font-size: 12px; }}
 </style>
 </head>
 <body>
@@ -752,6 +835,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   </div>
   {timer_html}
   {stats_html}
+  {goal_html}
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="live-bar">
     <input type="text" id="search-input" placeholder="Search member...">
@@ -762,7 +846,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Half-Hour Reps (+30m) <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
+    <thead><tr><th># <span class="sort-arrow"></span></th><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Half-Hour Reps (+30m) <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
   </div>
@@ -833,6 +917,7 @@ def save_snapshot(data):
         clan_reputation = 0
         today_gain = 0
 
+    goal_info = compute_goal_info(clan_reputation)
     stats = None
     if season_info:
         end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=TARGET_TZ)
@@ -848,9 +933,9 @@ def save_snapshot(data):
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info)
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info)
 
     save_30m_cache(data["members"], now)
     if is_hourly_mark:
