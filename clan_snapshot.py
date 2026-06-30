@@ -683,7 +683,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>30m Reps <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
+    <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Half-Hour Reps (+30m) <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
   </div>
