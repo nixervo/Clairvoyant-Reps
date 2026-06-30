@@ -447,9 +447,9 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
       var name = names[i], rep = lm[name]; if (rep === undefined) continue;
       var row = n2r[name]; if (!row) continue;
       var cel = row.cells;
-      cel[1].textContent = rep;
-      if (c30 && c30.rs && c30.rs[name] !== undefined) cel[2].innerHTML = dh(rep - c30.rs[name]);
-      if (c1h && c1h.rs && c1h.rs[name] !== undefined) cel[3].innerHTML = dh(rep - c1h.rs[name]);
+      cel[2].textContent = rep;
+      if (c30 && c30.rs && c30.rs[name] !== undefined) cel[3].innerHTML = dh(rep - c30.rs[name]);
+      if (c1h && c1h.rs && c1h.rs[name] !== undefined) cel[4].innerHTML = dh(rep - c1h.rs[name]);
     }
     for (var _n in lm) {
       if (names.indexOf(_n) === -1) {
