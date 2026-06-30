@@ -367,14 +367,14 @@
   
   <div class="footer">
     <div class="footer-updated" id="updated-ago"></div>
-    Snapshot: 2026-07-01 04:40:17
-    <div class="ref">Ref (30m): 2026-07-01 04:37:02 &middot; Ref (hourly): 2026-07-01 02:01:00 &middot; Ref (daily): 2026-06-30 16:32:13</div>
+    Snapshot: 2026-07-01 04:47:39
+    <div class="ref">Ref (30m): 2026-07-01 04:40:17 &middot; Ref (hourly): 2026-07-01 02:01:00 &middot; Ref (daily): 2026-06-30 16:32:13</div>
     <div class="footer-csv"><a id="csv-link">Download CSV</a></div>
   </div>
 </div>
 <script>
 (function() {
-  var end = new Date("2026-07-18T23:59:59+0800").getTime();
+  var end = new Date("2026-07-18T23:59:59Z").getTime();
   function tick() {
     var diff = end - new Date().getTime();
     if (diff <= 0) { document.getElementById("timer-d").textContent = "0"; document.getElementById("timer-h").textContent = "00"; document.getElementById("timer-m").textContent = "00"; document.getElementById("timer-s").textContent = "00"; return; }

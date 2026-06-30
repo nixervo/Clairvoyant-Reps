@@ -401,8 +401,8 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     season_end_iso = ""
     if season_info:
         season_num = season_info["season"]
-        end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=TARGET_TZ)
-        season_end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+        end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        season_end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         timer_html = f"""
   <div class="timer-bar">
     <span class="timer-left">
@@ -1100,7 +1100,7 @@ def save_snapshot(data):
     goal_info = compute_goal_info(clan_reputation)
     stats = None
     if season_info:
-        end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=TARGET_TZ)
+        end_dt = datetime.strptime(season_info["season_end"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
         avg_daily = compute_rolling_avg_daily_gain(EXCEL_FILE, sheet_name)
         proj = compute_season_projection(clan_reputation, avg_daily, end_dt, now)
         if proj:
