@@ -263,6 +263,8 @@ def compute_goal_info(clan_reputation):
 def diff_html(diff_str):
     if diff_str.startswith("+"):
         return f'<span class="up">{diff_str}</span>'
+    elif diff_str == "0":
+        return f'<span class="down">{diff_str}</span>'
     elif diff_str.startswith("-"):
         return f'<span class="down">{diff_str}</span>'
     else:
@@ -432,7 +434,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   function pad(n) { return n < 10 ? "0"+n : ""+n; }
   function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
   function fj(u) { return fetch(u,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).catch(function(){return null;}); }
-  function dh(v) { return v > 0 ? '<span class="up">+'+v+"</span>" : v < 0 ? '<span class="down">'+v+"</span>" : '<span class="na">0</span>'; }
+  function dh(v) { return v > 0 ? '<span class="up">+'+v+"</span>" : v <= 0 ? '<span class="down">'+v+"</span>" : '<span class="na">N/A</span>'; }
   function blk30(m) { return m <= 1 ? "01" : (m >= 31 && m <= 32 ? "31" : null); }
   function blk1h(m) { return m <= 1 ? "01" : null; }
   function upd(d, rk) {
@@ -820,6 +822,8 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   .goal-info .goal-next {{ color: #e94560; font-weight: 600; }}
   .goal-info .goal-num {{ color: #ccc; font-variant-numeric: tabular-nums; }}
   td:first-child, th:first-child {{ width: 28px; min-width: 28px; text-align: center; color: #666; font-size: 12px; }}
+  td:nth-child(4) .up::before, td:nth-child(4) .down::before,
+  td:nth-child(5) .up::before, td:nth-child(5) .down::before {{ content: none !important; }}
 </style>
 </head>
 <body>
@@ -846,7 +850,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   </div>
   <div class="table-wrap">
   <table>
-    <thead><tr><th># <span class="sort-arrow"></span></th><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Half-Hour Reps (+30m) <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
+    <thead><tr><th># <span class="sort-arrow"></span></th><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>1/2 Hour <span class="sort-arrow"></span></th><th>Hourly <span class="sort-arrow"></span></th><th>Daily <span class="sort-arrow"></span></th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
   </div>
