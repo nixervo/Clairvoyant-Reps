@@ -1,4 +1,3 @@
-# Clan reputation snapshot - runs hourly, daily dump at 13:00 GMT+8
 name: Clan Snapshot
 
 on:
@@ -6,12 +5,17 @@ on:
     - cron: "0 * * * *"
   workflow_dispatch:
 
+concurrency:
+  group: clan-snapshot
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    timeout-minutes: 4320
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,11 +27,4 @@ jobs:
 
       - run: pip install openpyxl
 
-      - run: python clan_snapshot.py --once
-
-      - run: |
-          git config user.name "clan-snapshot-bot"
-          git config user.email "bot@clan-snapshot.local"
-          git add clan_2527.xlsx index.html *.html _hourly_cache.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "clan snapshot update"
-          git push
+      - run: python clan_snapshot.py

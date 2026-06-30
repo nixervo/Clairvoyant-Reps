@@ -12,6 +12,7 @@ API_URL = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527"
 TARGET_TZ = timezone(timedelta(hours=8))
 EXCEL_FILE = "clan_2527.xlsx"
 HOURLY_CACHE = "_hourly_cache.json"
+CACHE_30M = "_30m_cache.json"
 CLAN_ID = 2527
 
 def fetch_clan():
@@ -77,6 +78,20 @@ def save_hourly_cache(members, now):
         "members": {m["character_name"]: m["member_reputation"] for m in members}
     }
     with open(HOURLY_CACHE, "w", encoding="utf-8") as f:
+        json.dump(cache, f)
+
+def load_30m_cache():
+    if not os.path.exists(CACHE_30M):
+        return None
+    with open(CACHE_30M, encoding="utf-8") as f:
+        return json.load(f)
+
+def save_30m_cache(members, now):
+    cache = {
+        "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "members": {m["character_name"]: m["member_reputation"] for m in members}
+    }
+    with open(CACHE_30M, "w", encoding="utf-8") as f:
         json.dump(cache, f)
 
 def compute_rolling_avg_daily_gain(filename, before_date):
@@ -233,7 +248,7 @@ def diff_html(diff_str):
     else:
         return f'<span class="na">{diff_str}</span>'
 
-def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None):
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None):
     daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -256,8 +271,9 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
         for d in sorted(all_dates, reverse=True)
     )
 
+    diffs_30m_map = diff_30m.get("diffs", {}) if isinstance(diff_30m, dict) else {}
     table_rows = "".join(
-        f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(hourly_diffs.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(daily_diff)}</td></tr>"
+        f"<tr><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diffs_30m_map.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(hourly_diffs.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(daily_diff)}</td></tr>"
         for name, reps, daily_diff in daily_rows
     )
 
@@ -286,6 +302,8 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     favicon_html = f'<link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,{favicon_b64}">' if favicon_b64 else ""
 
     hourly_ref = f"Ref (hourly): {hourly_ts}" if hourly_ts else ""
+    ref_30m_val = diff_30m.get("ts", "") if isinstance(diff_30m, dict) else ""
+    ref_30m = f"Ref (30m): {ref_30m_val}" if ref_30m_val else ""
     daily_ref = f"Ref (daily): {prev_timestamp}" if prev_timestamp else ""
 
     timer_html = ""
@@ -613,14 +631,14 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
+    <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>30m Reps <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
     <tbody>{table_rows}</tbody>
   </table>
   </div>
   {changes_html}
   <div class="footer">
     Snapshot: {ts_str}
-    <div class="ref">{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
+    <div class="ref">{ref_30m}{" &middot; " if ref_30m and (hourly_ref or daily_ref) else ""}{hourly_ref}{" &middot; " if hourly_ref and daily_ref else ""}{daily_ref}</div>
   </div>
 </div>
 {script_html}
@@ -656,6 +674,21 @@ def save_snapshot(data):
         else:
             hourly_diffs[name] = "N/A"
 
+    cache_30m = load_30m_cache()
+    diffs_30m = {}
+    ref_30m_ts = ""
+    if cache_30m:
+        ref_30m_ts = cache_30m.get("timestamp", "")
+        for m in data["members"]:
+            name = m["character_name"]
+            reps = m["member_reputation"]
+            if name in cache_30m.get("members", {}):
+                diff = reps - cache_30m["members"][name]
+                diffs_30m[name] = f"+{diff}" if diff > 0 else str(diff)
+            else:
+                diffs_30m[name] = "N/A"
+    diff_30m_data = {"ts": ref_30m_ts, "diffs": diffs_30m}
+
     try:
         season_info = fetch_season_info()
     except Exception:
@@ -677,32 +710,43 @@ def save_snapshot(data):
         if proj:
             stats = {"today_gain": today_gain, "season_total": clan_reputation, "projection": proj["projection"], "avg_daily": proj["avg_daily"], "days_left": proj["days_left"]}
 
+    is_hourly_mark = (now.minute <= 1)
+
     if is_daily:
         save_xlsx(data, prev_data, now)
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats)
-        save_hourly_cache(data["members"], now)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data)
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data)
+
+    save_30m_cache(data["members"], now)
+    if is_hourly_mark:
         save_hourly_cache(data["members"], now)
 
     if season_info and now >= end_dt and avg_daily is not None:
         save_seasonal_xlsx(data["members"], season_info["season"])
 
 def run():
-    print("Clan snapshot daemon started. Will run hourly.")
+    print("Clan snapshot daemon started. Running every 30 minutes.")
     while True:
         now = datetime.now(TARGET_TZ)
-        target = now.replace(minute=1, second=0, microsecond=0)
-        if now.minute >= 1:
-            target += timedelta(hours=1)
+        if now.minute < 1:
+            target = now.replace(minute=1, second=0, microsecond=0)
+        elif now.minute < 31:
+            target = now.replace(minute=31, second=0, microsecond=0)
+        else:
+            target = (now + timedelta(hours=1)).replace(minute=1, second=0, microsecond=0)
         sleep_sec = (target - now).total_seconds()
         time.sleep(sleep_sec)
         try:
             data = fetch_clan()
             save_snapshot(data)
+            ts = datetime.now(TARGET_TZ).strftime("%Y-%m-%d %H:%M:%S")
+            os.system("git add -A")
+            os.system(f'git commit -m "auto: snapshot {ts}" --allow-empty')
+            os.system("git push")
         except Exception as e:
             print(f"[{datetime.now(TARGET_TZ).strftime('%Y-%m-%d %H:%M:%S')}] ERROR: {e}")
 
