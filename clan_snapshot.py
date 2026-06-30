@@ -467,11 +467,12 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[750000,"Back Item"],[1000000,"Weapon"],[1600000,"Jutsu"]];
 (function() {
   var tbody = document.querySelector("tbody");
+  window.__originalRows = tbody.innerHTML;
   window.__defaultRows = tbody.innerHTML;
   var sortCol = -1, sortDir = 0;
   var ths = document.querySelectorAll("th");
   function applySort() {
-    if (sortDir === 0) { tbody.innerHTML = window.__defaultRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; return; }
+    if (sortDir === 0) { tbody.innerHTML = window.__originalRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; if (window.__refreshData) window.__refreshData(); return; }
     for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
     ths[sortCol].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\\u25B2" : "\\u25BC";
     var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
@@ -583,6 +584,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
       }
     });
   }
+  window.__refreshData = refreshData;
   refreshData();
   setInterval(refreshData, 60000);
   setInterval(function(){if(autoSeconds>0)autoSeconds--;if(autoEl)autoEl.textContent=autoSeconds;},1000);
