@@ -472,7 +472,7 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
   var sortCol = -1, sortDir = 0;
   var ths = document.querySelectorAll("th");
   function applySort() {
-    if (sortDir === 0) { tbody.innerHTML = window.__originalRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; if (window.__refreshData) window.__refreshData(); return; }
+    if (sortDir === 0) { tbody.innerHTML = window.__originalRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; if (window.__refreshData) window.__refreshData(); var se = document.getElementById("search-input"); if(se&&se.value){var q=se.value.toLowerCase(),rr=tbody.querySelectorAll("tr");for(var ri=0;ri<rr.length;ri++)rr[ri].style.display=rr[ri].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";} return; }
     for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
     ths[sortCol].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\\u25B2" : "\\u25BC";
     var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
@@ -593,24 +593,22 @@ window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[75
     var q = this.value.toLowerCase(), r = tb.querySelectorAll("tr");
     for(var i=0;i<r.length;i++)r[i].style.display=r[i].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";
   });
-  // Click-to-copy
-  var nameCells = tb.querySelectorAll("td:nth-child(2)");
-  for (var i = 0; i < nameCells.length; i++) (function(cell) {
-    cell.style.cursor = "pointer";
-    cell.title = "Click to copy name";
-    cell.addEventListener("click", function() {
-      var name = this.textContent.trim();
-      navigator.clipboard.writeText(name).then(function() {
-        var toast = document.createElement("span");
-        toast.className = "copied-toast";
-        toast.textContent = "Copied!";
-        toast.style.opacity = "1";
-        cell.style.position = "relative";
-        cell.appendChild(toast);
-        setTimeout(function() { toast.style.opacity = "0"; setTimeout(function() { toast.remove(); }, 300); }, 1500);
-      }).catch(function() {});
-    });
-  })(nameCells[i]);
+  // Click-to-copy (event delegation on tbody)
+  tb.addEventListener("click", function(e) {
+    var cell = e.target;
+    while (cell && cell.tagName !== "TD") cell = cell.parentNode;
+    if (!cell || cell.cellIndex !== 1) return;
+    var name = cell.textContent.trim();
+    navigator.clipboard.writeText(name).then(function() {
+      var toast = document.createElement("span");
+      toast.className = "copied-toast";
+      toast.textContent = "Copied!";
+      toast.style.opacity = "1";
+      cell.style.position = "relative";
+      cell.appendChild(toast);
+      setTimeout(function() { toast.style.opacity = "0"; setTimeout(function() { toast.remove(); }, 300); }, 1500);
+    }).catch(function() {});
+  });
   // Reset sort
   var resetBtn = document.getElementById("reset-btn");
   if (resetBtn) resetBtn.addEventListener("click", function() {
