@@ -420,6 +420,15 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 
     stats_html = ""
     if stats:
+        right_col = ""
+        if "projection" in stats:
+            right_col = f"""
+    <div class="stats-col">
+      <span class="stat-label">Est. Season Total</span>
+      <span class="stat-val" id="est-season">{stats['projection']:,}</span>
+      <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
+      <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
+    </div>"""
         stats_html = f"""
   <div class="stats-bar">
     <div class="stats-col">
@@ -427,13 +436,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       <span class="stat-val" id="today-gain">+{stats['today_gain']:,}</span>
       <span class="stat-label">Season Total</span>
       <span class="stat-val" id="season-total">{stats['season_total']:,}</span>
-    </div>
-    <div class="stats-col">
-      <span class="stat-label">Est. Season Total</span>
-      <span class="stat-val" id="est-season">{stats['projection']:,}</span>
-      <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
-      <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
-    </div>
+    </div>{right_col}
   </div>"""
 
     goal_html = ""
@@ -465,7 +468,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   setInterval(tick, 1000);
 })();
 window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[750000,"Back Item"],[1000000,"Weapon"],[1600000,"Jutsu"]];
-window.__avgDaily = """ + (str(stats['avg_daily']) if stats else '0') + """;
+window.__avgDaily = """ + (str(stats['avg_daily']) if stats and 'avg_daily' in stats else '0') + """;
 window.__seasonEnd = \"""" + season_end_iso + """\";
 (function() {
   var tbody = document.querySelector("tbody");
@@ -1118,9 +1121,12 @@ def save_snapshot(data):
         end_dt = datetime(2026, 7, 19, 5, 0, 0, tzinfo=timezone.utc)
         avg_daily = compute_rolling_avg_daily_gain(EXCEL_FILE, sheet_name)
         proj = compute_season_projection(clan_reputation, avg_daily, end_dt, now)
+        stats = {"today_gain": today_gain, "season_total": clan_reputation}
         if proj:
-            stats = {"today_gain": today_gain, "season_total": clan_reputation, "projection": proj["projection"], "avg_daily": proj["avg_daily"], "days_left": proj["days_left"]}
-
+            stats["projection"] = proj["projection"]
+            stats["avg_daily"] = proj["avg_daily"]
+            stats["days_left"] = proj["days_left"]
+ 
     is_hourly_mark = (now.minute <= 1)
 
     if is_daily:
