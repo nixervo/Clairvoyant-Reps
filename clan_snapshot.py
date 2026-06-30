@@ -420,23 +420,31 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 
     stats_html = ""
     if stats:
-        right_col = ""
-        if "projection" in stats:
-            right_col = f"""
-    <div class="stats-col">
-      <span class="stat-label">Est. Season Total</span>
-      <span class="stat-val" id="est-season">{stats['projection']:,}</span>
-      <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
-      <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
-    </div>"""
         stats_html = f"""
   <div class="stats-bar">
-    <div class="stats-col">
-      <span class="stat-label">Today</span>
-      <span class="stat-val" id="today-gain">+{stats['today_gain']:,}</span>
-      <span class="stat-label">Season Total</span>
-      <span class="stat-val" id="season-total">{stats['season_total']:,}</span>
-    </div>{right_col}
+    <div class="stats-row">
+      <div class="stats-col">
+        <span class="stat-label">Today</span>
+        <span class="stat-val" id="today-gain">+{stats['today_gain']:,}</span>
+      </div>
+      <div class="stats-col">
+        <span class="stat-label">Season Total</span>
+        <span class="stat-val" id="season-total">{stats['season_total']:,}</span>
+      </div>
+    </div>"""
+        if "projection" in stats:
+            stats_html += f"""
+    <div class="stats-row">
+      <div class="stats-col">
+        <span class="stat-label">Est. Season Total</span>
+        <span class="stat-val" id="est-season">{stats['projection']:,}</span>
+      </div>
+      <div class="stats-col">
+        <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
+        <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
+      </div>
+    </div>"""
+        stats_html += """
   </div>"""
 
     goal_html = ""
@@ -867,15 +875,20 @@ window.__seasonEnd = \"""" + season_end_iso + """\";
   .timer-right:hover {{ color: #e94560; }}
   .stats-bar {{
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 32px;
+    gap: 8px;
     padding: 14px 20px;
     background: #0f142373;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border-top: 1px solid #1a1a2e;
-    flex-wrap: wrap;
+  }}
+  .stats-row {{
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    width: 100%;
   }}
   .stats-col {{
     display: flex;
@@ -902,10 +915,10 @@ window.__seasonEnd = \"""" + season_end_iso + """\";
     .archive {{ flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }}
     .archive::-webkit-scrollbar {{ display: none; }}
     .archive a {{ flex-shrink: 0; }}
-    .stats-bar {{ gap: 16px; padding: 12px 16px; }}
+    .stats-bar {{ gap: 10px; padding: 12px 16px; }}
     .stat-val {{ font-size: 15px; }}
-    .stats-col {{ width: 100%; }}
-    .stats-col + .stats-col {{ border-top: 1px solid #1a1a2e; padding-top: 10px; }}
+    .stats-row {{ flex-direction: column; gap: 6px; align-items: center; }}
+    .stats-row + .stats-row {{ border-top: 1px solid #1a1a2e; padding-top: 10px; }}
   }}
   .live-bar {{
     display: flex;
