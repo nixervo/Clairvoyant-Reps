@@ -314,14 +314,17 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
         season_end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S%z")
         timer_html = f"""
   <div class="timer-bar">
-    <span class="timer-season">Season <span id="season-num">{season_num}</span></span>
-    <span class="timer-sep">&middot;</span>
-    <span class="timer-clock">
-      <span class="timer-digits"><span id="timer-d">--</span><span class="timer-unit">d</span></span>
-      <span class="timer-digits"><span id="timer-h">--</span><span class="timer-unit">h</span></span>
-      <span class="timer-digits"><span id="timer-m">--</span><span class="timer-unit">m</span></span>
-      <span class="timer-digits"><span id="timer-s">--</span><span class="timer-unit">s</span></span>
+    <span class="timer-left">
+      <span class="timer-season">Season <span id="season-num">{season_num}</span></span>
+      <span class="timer-sep">&middot;</span>
+      <span class="timer-clock">
+        <span class="timer-digits"><span id="timer-d">--</span><span class="timer-unit">d</span></span>
+        <span class="timer-digits"><span id="timer-h">--</span><span class="timer-unit">h</span></span>
+        <span class="timer-digits"><span id="timer-m">--</span><span class="timer-unit">m</span></span>
+        <span class="timer-digits"><span id="timer-s">--</span><span class="timer-unit">s</span></span>
+      </span>
     </span>
+    <span class="timer-right" id="auto-refresh">&#x21BB; Auto Refresh in <span id="auto-seconds">60</span>s</span>
   </div>"""
 
     stats_html = ""
@@ -384,6 +387,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   var API = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527", RK = "https://playninjarift.com/api/clan_ranking_website.php";
   var tb = document.querySelector("tbody"), names = [], rws = tb.querySelectorAll("tr");
   for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[0].textContent.trim());
+  var autoSeconds = 60, autoEl = document.getElementById("auto-seconds");
   function pad(n) { return n < 10 ? "0"+n : ""+n; }
   function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
   function fj(u) { return fetch(u,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).catch(function(){return null;}); }
@@ -391,6 +395,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   function blk30(m) { return m <= 1 ? "01" : (m >= 31 && m <= 32 ? "31" : null); }
   function blk1h(m) { return m <= 1 ? "01" : null; }
   function upd(d, rk) {
+    autoSeconds = 60;
     var n = new Date(), nm = n.getMinutes(), ns = ts();
     var lm = {}; for (var i = 0; i < d.length; i++) lm[d[i].character_name] = d[i].member_reputation;
     var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[0].textContent.trim()] = a[i];
@@ -417,8 +422,11 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     if (b1h && (!c1h || c1h.b !== b1h)) localStorage.setItem("nr_1h", JSON.stringify({b: b1h, ts: ns, rs: rs}));
     window.__defaultRows = tb.innerHTML;
   }
-  Promise.all([fj(API), fj(RK)]).then(function(r){if(r[0]&&r[0].members)upd(r[0].members,r[1]);});
-  setInterval(function(){Promise.all([fj(API),fj(RK)]).then(function(r){if(r[0]&&r[0].members)upd(r[0].members,r[1]);});},60000);
+  function refreshData() { Promise.all([fj(API), fj(RK)]).then(function(r){if(r[0]&&r[0].members)upd(r[0].members,r[1]);}); }
+  refreshData();
+  setInterval(refreshData, 60000);
+  setInterval(function(){if(autoSeconds>0)autoSeconds--;if(autoEl)autoEl.textContent=autoSeconds;},1000);
+  if(autoEl)autoEl.parentElement.addEventListener("click",function(){autoSeconds=60;refreshData();});
 })();
 </script>"""
 
@@ -595,7 +603,7 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   .timer-bar {{
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 10px;
     padding: 12px 20px;
     background: #0f142373;
@@ -605,12 +613,15 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     font-size: 15px;
     flex-wrap: wrap;
   }}
+  .timer-left {{ display: flex; align-items: center; gap: 10px; }}
   .timer-season {{ color: #eab308; font-weight: 700; letter-spacing: 0.5px; }}
   .timer-sep {{ color: #444; }}
   .timer-clock {{ display: flex; align-items: center; gap: 6px; }}
   .timer-digits {{ font-variant-numeric: tabular-nums; }}
   .timer-digits span:first-child {{ color: #2dd4bf; font-weight: 600; min-width: 28px; display: inline-block; text-align: center; }}
   .timer-unit {{ color: #888; font-size: 12px; margin-left: 1px; }}
+  .timer-right {{ cursor: pointer; font-size: 12px; color: #888; user-select: none; white-space: nowrap; }}
+  .timer-right:hover {{ color: #e94560; }}
   .stats-bar {{
     display: flex;
     align-items: center;
