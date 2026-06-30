@@ -366,28 +366,34 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   window.__defaultRows = tbody.innerHTML;
   var sortCol = -1, sortDir = 0;
   var ths = document.querySelectorAll("th");
+  function applySort() {
+    if (sortDir === 0) { tbody.innerHTML = window.__defaultRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; return; }
+    for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
+    ths[sortCol].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\\u25B2" : "\\u25BC";
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
+    rows.sort(function(a, b) {
+      var va = a.cells[sortCol].textContent.trim(), vb = b.cells[sortCol].textContent.trim();
+      if (sortCol === 0) return sortDir === 1 ? va.localeCompare(vb) : vb.localeCompare(va);
+      var na = parseFloat(va) || -1/0, nb = parseFloat(vb) || -1/0;
+      return sortDir === 1 ? na - nb : nb - na;
+    });
+    for (var r = 0; r < rows.length; r++) tbody.appendChild(rows[r]);
+  }
   for (var i = 0; i < ths.length; i++) (function(col) {
     ths[col].addEventListener("click", function() {
       if (sortCol !== col) { sortCol = col; sortDir = 1; }
-      else { sortDir = (sortDir + 1) % 3; if (sortDir === 0) { tbody.innerHTML = window.__defaultRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; return; } }
-      for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
-      ths[col].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\\u25B2" : "\\u25BC";
-      var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
-      rows.sort(function(a, b) {
-        var va = a.cells[col].textContent.trim(), vb = b.cells[col].textContent.trim();
-        if (col === 0) return sortDir === 1 ? va.localeCompare(vb) : vb.localeCompare(va);
-        var na = parseFloat(va) || -1/0, nb = parseFloat(vb) || -1/0;
-        return sortDir === 1 ? na - nb : nb - na;
-      });
-      for (var r = 0; r < rows.length; r++) tbody.appendChild(rows[r]);
+      else { sortDir = (sortDir + 1) % 3; }
+      applySort();
+      localStorage.setItem("nr_sort", JSON.stringify({col: sortCol, dir: sortDir}));
     });
   })(i);
+  try { var _s = JSON.parse(localStorage.getItem("nr_sort")); if (_s && _s.dir > 0) { sortCol = _s.col; sortDir = _s.dir; applySort(); } } catch(e) {}
 })();
 (function() {
   var API = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527", RK = "https://playninjarift.com/api/clan_ranking_website.php";
   var tb = document.querySelector("tbody"), names = [], rws = tb.querySelectorAll("tr");
   for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[0].textContent.trim());
-  var autoSeconds = 60, autoEl = document.getElementById("auto-seconds");
+  var autoSeconds = 60, autoEl = document.getElementById("auto-seconds"), searchEl = document.getElementById("search-input"), dotEl = document.getElementById("status-dot"), statusEl = document.getElementById("status-text");
   function pad(n) { return n < 10 ? "0"+n : ""+n; }
   function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
   function fj(u) { return fetch(u,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).catch(function(){return null;}); }
@@ -408,6 +414,22 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       if (c30 && c30.rs && c30.rs[name] !== undefined) cel[2].innerHTML = dh(rep - c30.rs[name]);
       if (c1h && c1h.rs && c1h.rs[name] !== undefined) cel[3].innerHTML = dh(rep - c1h.rs[name]);
     }
+    for (var _n in lm) {
+      if (names.indexOf(_n) === -1) {
+        names.push(_n);
+        var tr = document.createElement("tr");
+        tr.className = "new-row";
+        tr.innerHTML = '<td>' + _n + '</td><td class="num">' + lm[_n] + '</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td>';
+        tb.appendChild(tr);
+        if (searchEl && searchEl.value && _n.toLowerCase().indexOf(searchEl.value.toLowerCase()) === -1) tr.style.display = "none";
+      }
+    }
+    a = tb.querySelectorAll("tr"); n2r = {};
+    for (var i = 0; i < a.length; i++) n2r[a[i].cells[0].textContent.trim()] = a[i];
+    for (var i = 0; i < names.length; i++) {
+      var row = n2r[names[i]];
+      if (row && lm[names[i]] === undefined) row.className = "left-row";
+    }
     if (rk) {
       var te = document.getElementById("today-gain");
       if (te && rk.clan_day_points !== undefined) te.textContent = "+"+Number(rk.clan_day_points).toLocaleString();
@@ -422,11 +444,28 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     if (b1h && (!c1h || c1h.b !== b1h)) localStorage.setItem("nr_1h", JSON.stringify({b: b1h, ts: ns, rs: rs}));
     window.__defaultRows = tb.innerHTML;
   }
-  function refreshData() { Promise.all([fj(API), fj(RK)]).then(function(r){if(r[0]&&r[0].members)upd(r[0].members,r[1]);}); }
+  function refreshData() {
+    if (dotEl) dotEl.className = "status-dot wait";
+    if (statusEl) statusEl.textContent = "Loading...";
+    Promise.all([fj(API), fj(RK)]).then(function(r) {
+      if (r[0] && r[0].members) {
+        upd(r[0].members, r[1]);
+        if (dotEl) dotEl.className = "status-dot ok";
+        if (statusEl) statusEl.textContent = "Live";
+      } else {
+        if (dotEl) dotEl.className = "status-dot err";
+        if (statusEl) statusEl.textContent = "Offline";
+      }
+    });
+  }
   refreshData();
   setInterval(refreshData, 60000);
   setInterval(function(){if(autoSeconds>0)autoSeconds--;if(autoEl)autoEl.textContent=autoSeconds;},1000);
   if(autoEl)autoEl.parentElement.addEventListener("click",function(){autoSeconds=60;refreshData();});
+  if(searchEl)searchEl.addEventListener("input",function(){
+    var q = this.value.toLowerCase(), r = tb.querySelectorAll("tr");
+    for(var i=0;i<r.length;i++)r[i].style.display=r[i].cells[0].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";
+  });
 })();
 </script>"""
 
@@ -665,6 +704,39 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     .stats-col {{ width: 100%; }}
     .stats-col + .stats-col {{ border-top: 1px solid #1a1a2e; padding-top: 10px; }}
   }}
+  .live-bar {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: #0a0a14;
+    border-top: 1px solid #14141f;
+    border-bottom: 1px solid #14141f;
+    gap: 12px;
+    flex-wrap: wrap;
+  }}
+  #search-input {{
+    flex: 1;
+    min-width: 160px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid #1a1a2e;
+    background: #0f0f1e;
+    color: #e0e0e0;
+    font-size: 13px;
+    outline: none;
+  }}
+  #search-input:focus {{ border-color: #e94560; }}
+  #search-input::placeholder {{ color: #555; }}
+  .live-status {{ display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; white-space: nowrap; }}
+  .status-dot {{ width: 8px; height: 8px; border-radius: 50%; }}
+  .status-dot.ok {{ background: #4caf50; }}
+  .status-dot.err {{ background: #f44336; }}
+  .status-dot.wait {{ background: #888; animation: pulse 1.5s infinite; }}
+  @keyframes pulse {{ 0%,100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
+  tr.new-row td {{ animation: fadeIn 0.5s ease; }}
+  @keyframes fadeIn {{ from {{ opacity: 0; background: rgba(233,69,96,0.1); }} to {{ opacity: 1; background: transparent; }} }}
+  tr.left-row td {{ opacity: 0.35; }}
 </style>
 </head>
 <body>
@@ -681,6 +753,13 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   {timer_html}
   {stats_html}
   {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
+  <div class="live-bar">
+    <input type="text" id="search-input" placeholder="Search member...">
+    <div class="live-status">
+      <span class="status-dot wait" id="status-dot"></span>
+      <span id="status-text">Idle</span>
+    </div>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>Half-Hour Reps (+30m) <span class="sort-arrow"></span></th><th>Hourly Reps (+1h) <span class="sort-arrow"></span></th><th>Daily Reps (+1d) <span class="sort-arrow"></span></th></tr></thead>
