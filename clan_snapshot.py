@@ -477,6 +477,7 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
     var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
     var c30 = null, c1h = null; try { c30 = JSON.parse(localStorage.getItem("nr_30m")); c1h = JSON.parse(localStorage.getItem("nr_1h")); } catch(e) {}
     if (!c1h && window.__hourlyCache) c1h = {rs: window.__hourlyCache, ts: ""};
+    for (var i = 0; i < names.length; i++) {
       var name = names[i], rep = lm[name]; if (rep === undefined) continue;
       var row = n2r[name]; if (!row) continue;
       var cel = row.cells;
