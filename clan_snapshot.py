@@ -13,6 +13,7 @@ TARGET_TZ = timezone(timedelta(hours=8))
 EXCEL_FILE = "clan_2527.xlsx"
 HOURLY_CACHE = "_hourly_cache.json"
 CACHE_30M = "_30m_cache.json"
+CACHE_1H = "_1h_cache.json"
 CLAN_ID = 2527
 GOAL_TIERS = [
     (100000, "5 Stamina Rolls"),
@@ -102,6 +103,16 @@ def save_30m_cache(members, now):
     }
     with open(CACHE_30M, "w", encoding="utf-8") as f:
         json.dump(cache, f)
+
+def load_1h_cache():
+    if not os.path.exists(CACHE_1H):
+        return None
+    with open(CACHE_1H, encoding="utf-8") as f:
+        return json.load(f)
+
+def save_1h_cache(member_dict, timestamp):
+    with open(CACHE_1H, "w", encoding="utf-8") as f:
+        json.dump({"timestamp": timestamp, "members": member_dict}, f)
 
 def compute_rolling_avg_daily_gain(filename, before_date):
     if not os.path.exists(filename):
@@ -1003,16 +1014,20 @@ def save_snapshot(data):
 
     prev_data, prev_timestamp = load_prev_from_xlsx(EXCEL_FILE, sheet_name)
 
-    hourly_cache, hourly_ts = load_hourly_cache()
+    cache_1h = load_1h_cache()
     hourly_diffs = {}
-    for m in data["members"]:
-        name = m["character_name"]
-        reps = m["member_reputation"]
-        if name in hourly_cache:
-            diff = reps - hourly_cache[name]
-            hourly_diffs[name] = f"+{diff}" if diff > 0 else str(diff)
-        else:
-            hourly_diffs[name] = "N/A"
+    hourly_ts = ""
+    if cache_1h and cache_1h.get("members"):
+        hourly_ts = cache_1h.get("timestamp", "")
+        for m in data["members"]:
+            name = m["character_name"]
+            reps = m["member_reputation"]
+            memb = cache_1h["members"]
+            if name in memb:
+                diff = reps - memb[name]
+                hourly_diffs[name] = f"+{diff}" if diff > 0 else str(diff)
+            else:
+                hourly_diffs[name] = "N/A"
 
     cache_30m = load_30m_cache()
     diffs_30m = {}
@@ -1079,11 +1094,13 @@ def save_snapshot(data):
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, changes=changes, hourly_cache=hourly_cache)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, changes=changes, hourly_cache=cache_1h["members"] if cache_1h else {})
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, changes=changes, hourly_cache=hourly_cache)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, changes=changes, hourly_cache=cache_1h["members"] if cache_1h else {})
 
     save_30m_cache(data["members"], now)
+    if cache_30m:
+        save_1h_cache(cache_30m.get("members", {}), cache_30m.get("timestamp", ""))
     if is_hourly_mark:
         save_hourly_cache(data["members"], now)
 
