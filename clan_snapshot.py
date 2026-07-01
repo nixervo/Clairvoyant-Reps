@@ -1090,6 +1090,132 @@ def save_snapshot(data):
     if season_info and now >= end_dt and avg_daily is not None:
         save_seasonal_xlsx(data["members"], season_info["season"])
 
+    try:
+        save_daily_history()
+    except Exception as e:
+        print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] History error: {e}")
+
+def save_daily_history():
+    if not os.path.exists(EXCEL_FILE):
+        return
+    wb = load_workbook(EXCEL_FILE)
+    names = sorted([s.title for s in wb.worksheets if s.title != "Sheet1"])
+    if len(names) < 2:
+        return
+    sheets_data = []
+    for s in names:
+        ws = wb[s]
+        members = {}
+        for row in ws.iter_rows(min_row=4, max_col=2, values_only=True):
+            name = str(row[0]).strip() if row[0] else ""
+            if name and row[1] is not None:
+                members[name] = int(row[1])
+        sheets_data.append({"date": s, "members": members})
+    css = """<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #080810; color: #e0e0e0; min-height: 100vh; display: flex; justify-content: center; padding: 32px 16px; }
+  .container { max-width: 800px; width: 100%; box-shadow: 0 0 40px rgba(233,69,96,0.06), 0 8px 32px rgba(0,0,0,0.5); border-radius: 16px; overflow: hidden; }
+  .header { text-align: center; padding: 28px 24px 20px; background: linear-gradient(135deg, #0f0f1e 0%, #1a1a30 50%, #0d1b2a 100%); }
+  .header h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .header .sub { font-size: 14px; color: #888; }
+  .nav { display: flex; justify-content: space-between; padding: 12px 20px; background: #0c0c18; border-top: 1px solid #1a1a2e; border-bottom: 1px solid #1a1a2e; }
+  .nav a { color: #e94560; text-decoration: none; font-size: 13px; }
+  .nav a:hover { text-decoration: underline; }
+  .nav .inactive { color: #444; pointer-events: none; }
+  .summary { text-align: center; padding: 10px 20px; background: #0a0a14; color: #888; font-size: 13px; border-bottom: 1px solid #14141f; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: #0c0c14; }
+  th { background: #0f0f1e; padding: 12px 16px; text-align: center; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #e94560; font-weight: 600; }
+  td { padding: 10px 16px; border-bottom: 1px solid #14141f; font-size: 13px; color: #ccc; text-align: center; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+  .green td { color: #4caf50; }
+  .red td { color: #f44336; }
+  .footer { text-align: center; padding: 16px 20px; background: #08080f; color: #444; font-size: 12px; border-top: 1px solid #12121e; }
+  .footer a { color: #e94560; text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  .index-list { padding: 20px; background: #0c0c14; }
+  .index-list a { display: block; padding: 8px 14px; color: #ccc; text-decoration: none; font-size: 14px; border-bottom: 1px solid #14141f; }
+  .index-list a:hover { background: rgba(233,69,96,0.04); color: #fff; }
+  .index-list a:last-child { border-bottom: none; }
+  .index-list .met { color: #4caf50; font-weight: 600; }
+  .star-joined { color: #42a5f5; }
+  .star-left { color: #f44336; }
+</style>"""
+    daily_pages = []
+    for i in range(1, len(sheets_data)):
+        prev, curr = sheets_data[i-1], sheets_data[i]
+        date = curr["date"]
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        day_name = dt.strftime("%a")
+        threshold = 1000 if dt.weekday() >= 5 else 500
+        gains, all_names = [], set(curr["members"]) | set(prev["members"])
+        for name in all_names:
+            if name in curr["members"] and name in prev["members"]:
+                gains.append({"name": name, "gain": curr["members"][name] - prev["members"][name], "joined": False, "left": False})
+            elif name in curr["members"]:
+                gains.append({"name": name, "gain": None, "joined": True, "left": False})
+            else:
+                gains.append({"name": name, "gain": None, "joined": False, "left": True})
+        gains.sort(key=lambda x: (x["gain"] is None, -(x["gain"] or 0)))
+        met_count = sum(1 for g in gains if g["gain"] is not None and g["gain"] >= threshold)
+        total_current = len(curr["members"])
+        daily_pages.append({"date": date, "day_name": day_name, "threshold": threshold, "met": met_count, "total": total_current})
+        rows_html = ""
+        for idx, g in enumerate(gains, 1):
+            star = ""
+            if g["joined"]: star = '<span class="star-joined">&#9733;</span> '
+            elif g["left"]: star = '<span class="star-left">&#9734;</span> '
+            gain_str = f'+{g["gain"]:,}' if g["gain"] is not None else '<span class="star-left">N/A</span>'
+            row_class = ""
+            if g["gain"] is not None:
+                row_class = "green" if g["gain"] >= threshold else "red"
+            rows_html += f'<tr class="{row_class}"><td>{idx}</td><td>{star}{g["name"]}</td><td>{gain_str}</td><td>{"✅" if g["gain"] is not None and g["gain"] >= threshold else "❌"}</td></tr>\n'
+        prev_link = f'<a href="history_{prev["date"]}.html">&larr; Previous</a>' if i > 1 else '<span class="inactive">&larr; Previous</span>'
+        next_link = f'<a href="history_{sheets_data[i+1]["date"]}.html">Next &rarr;</a>' if i < len(sheets_data) - 1 else '<span class="inactive">Next &rarr;</span>'
+        page_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Reps · {date} ({day_name})</title>
+{css}
+</head>
+<body>
+<div class="container">
+  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · {date} ({day_name}) &middot; Min: <b>{threshold:,}</b></div></div>
+  <div class="summary">{met_count} of {total_current} members met the threshold ({threshold:,})</div>
+  <div class="nav">{prev_link}<a href="history.html">Index</a>{next_link}</div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Gain</th><th>Status</th></tr></thead><tbody>{rows_html}</tbody></table></div>
+  <div class="footer"><a href="index.html">&larr; Back to main page</a></div>
+</div>
+</body>
+</html>"""
+        with open(f"history_{date}.html", "w", encoding="utf-8") as f:
+            f.write(page_html)
+        print(f"[{datetime.now(TARGET_TZ).strftime('%Y-%m-%d %H:%M:%S')}] Saved history_{date}.html")
+    index_rows = ""
+    for dp in daily_pages:
+        index_rows += f'<a href="history_{dp["date"]}.html">{dp["date"]} ({dp["day_name"]}) <span class="met">{dp["met"]}/{dp["total"]}</span> met &rarr;</a>\n'
+    index_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Rep History · Season 61</title>
+{css}
+</head>
+<body>
+<div class="container">
+  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Rep History (Season 61)</div></div>
+  <div class="index-list">{index_rows}</div>
+  <div class="footer"><a href="index.html">&larr; Back to main page</a> &middot; <a href="https://github.com/nixervo/Clairvoyant-Reps">Source</a></div>
+</div>
+</body>
+</html>"""
+    with open("history.html", "w", encoding="utf-8") as f:
+        f.write(index_html)
+    print(f"[{datetime.now(TARGET_TZ).strftime('%Y-%m-%d %H:%M:%S')}] Saved history.html")
+
 def run():
     print("Clan snapshot daemon started. Running every 30 minutes.")
     os.system('git config user.name "clan-snapshot-bot"')
