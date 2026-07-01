@@ -379,6 +379,17 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
 
     stats_html = ""
     if stats:
+        proj_cols = ""
+        if "projection" in stats:
+            proj_cols = f"""
+      <div class="stats-col">
+        <span class="stat-label">Est. Season Total</span>
+        <span class="stat-val" id="est-season">{stats['projection']:,}</span>
+      </div>
+      <div class="stats-col">
+        <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
+        <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
+      </div>"""
         stats_html = f"""
   <div class="stats-bar">
     <div class="stats-row">
@@ -389,21 +400,8 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
       <div class="stats-col">
         <span class="stat-label">Season Total</span>
         <span class="stat-val" id="season-total">{stats['season_total']:,}</span>
-      </div>
-    </div>"""
-        if "projection" in stats:
-            stats_html += f"""
-    <div class="stats-row">
-      <div class="stats-col">
-        <span class="stat-label">Est. Season Total</span>
-        <span class="stat-val" id="est-season">{stats['projection']:,}</span>
-      </div>
-      <div class="stats-col">
-        <span class="stat-label" id="avg-label">Avg/Day &middot; {stats['days_left']}d left</span>
-        <span class="stat-val" id="avg-daily">{stats['avg_daily']:,}</span>
-      </div>
-    </div>"""
-        stats_html += """
+      </div>{proj_cols}
+    </div>
   </div>"""
 
     goal_html = ""
@@ -484,6 +482,14 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
   function blk1h(m) { return m <= 1 ? "01" : null; }
   function upd(d, rk) {
     autoSeconds = 60;
+    var clan = null;
+    if (rk) {
+      if (Array.isArray(rk)) {
+        for (var ci = 0; ci < rk.length; ci++) {
+          if (rk[ci].clan_id === 2527) { clan = rk[ci]; break; }
+        }
+      } else { clan = rk; }
+    }
     var n = new Date(), nm = n.getMinutes(), ns = ts();
     var lm = {}; for (var i = 0; i < d.length; i++) lm[d[i].character_name] = d[i].member_reputation;
     var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
@@ -513,11 +519,11 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
       var row = n2r[names[i]];
       if (row && lm[names[i]] === undefined) row.className = "left-row";
     }
-    if (rk) {
+    if (clan) {
       var te = document.getElementById("today-gain");
-      if (te && rk.clan_day_points !== undefined) te.textContent = "+"+Number(rk.clan_day_points).toLocaleString();
+      if (te && clan.clan_day_points !== undefined) te.textContent = "+"+Number(clan.clan_day_points).toLocaleString();
       var sv = document.querySelectorAll(".stats-col .stat-val");
-      if (sv.length >= 2 && rk.clan_reputation !== undefined) sv[1].textContent = Number(rk.clan_reputation).toLocaleString();
+      if (sv.length >= 2 && clan.clan_reputation !== undefined) sv[1].textContent = Number(clan.clan_reputation).toLocaleString();
     }
     var ft = document.querySelector(".footer");
     var st = document.getElementById("snapshot-ts"); if (st) st.textContent = ns;
@@ -528,8 +534,8 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
     window.__defaultRows = tb.innerHTML;
     var sr = tb.querySelectorAll("tr");
     for (var ri = 0; ri < sr.length; ri++) sr[ri].cells[0].textContent = ri + 1;
-    if (rk && rk.clan_reputation !== undefined) {
-      var rep = Number(rk.clan_reputation), prev = 0, tiers = window.__goalTiers;
+    if (clan && clan.clan_reputation !== undefined) {
+      var rep = Number(clan.clan_reputation), prev = 0, tiers = window.__goalTiers;
       for (var ti = 0; ti < tiers.length; ti++) {
         if (rep < tiers[ti][0]) {
           var pct = ((rep - prev) / (tiers[ti][0] - prev)) * 100;
@@ -544,11 +550,11 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
         prev = tiers[ti][0];
       }
     }
-    if (rk && window.__avgDaily > 0 && window.__seasonEnd) {
+    if (clan && window.__avgDaily > 0 && window.__seasonEnd) {
       var seEnd = new Date(window.__seasonEnd).getTime(), nowMs = new Date().getTime();
       var daysLeft = Math.ceil((seEnd - nowMs) / 86400000);
       if (daysLeft < 0) daysLeft = 0;
-      var proj = Number(rk.clan_reputation);
+      var proj = Number(clan.clan_reputation);
       var cur = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 0, 0, 0, 0);
       while (cur.getTime() <= seEnd) {
         proj += cur.getDay() % 6 === 0 ? window.__avgDaily * 2 : window.__avgDaily;
