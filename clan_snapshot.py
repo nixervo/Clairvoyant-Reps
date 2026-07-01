@@ -251,7 +251,7 @@ def compute_season_projection(clan_reputation, avg_daily_gain, season_end_dt, no
     current = now + timedelta(days=1)
     current = current.replace(hour=0, minute=0, second=0, microsecond=0)
     while current <= season_end_dt:
-        if current.weekday() >= 5:
+        if current.weekday() in (6, 0):
             projection += avg_daily_gain * 2
         else:
             projection += avg_daily_gain
@@ -1164,7 +1164,7 @@ def save_daily_history():
         date = curr["date"]
         dt = datetime.strptime(date, "%Y-%m-%d")
         day_name = dt.strftime("%a")
-        threshold = 1000 if dt.weekday() >= 5 else 500
+        threshold = 1000 if dt.weekday() in (6, 0) else 500
         gains, all_names = [], set(curr["members"]) | set(prev["members"])
         for name in all_names:
             if name in curr["members"] and name in prev["members"]:
