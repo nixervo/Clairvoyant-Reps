@@ -475,6 +475,7 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
   var tb = document.querySelector("tbody"), names = [], rws = tb.querySelectorAll("tr");
   for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[1].textContent.trim());
   var autoSeconds = 60, autoEl = document.getElementById("auto-seconds"), searchEl = document.getElementById("search-input"), dotEl = document.getElementById("status-dot"), statusEl = document.getElementById("status-text");
+  if (window.__hourlyCache && Object.keys(window.__hourlyCache).length > 0) { var _ts = ts(), _m = String(new Date().getMinutes()), _b = _m <= "1" ? "01" : (_m >= "31" && _m <= "32" ? "31" : _m); localStorage.setItem("nr_1h", JSON.stringify({b: _b, ts: _ts, rs: window.__hourlyCache})); }
   function pad(n) { return n < 10 ? "0"+n : ""+n; }
   function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
   function fj(u) { return fetch(u,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).catch(function(){return null;}); }
