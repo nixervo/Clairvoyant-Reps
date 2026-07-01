@@ -296,19 +296,14 @@ def detect_renames(prev_members, curr_members, left_names=None, joined_names=Non
     if left_names is None: left_names = set()
     if joined_names is None: joined_names = set()
     renames = []
-    possible = []
     for i in range(min(len(prev_members), len(curr_members))):
         p = prev_members[i]
         c = curr_members[i]
         if p["name"] != c["name"]:
             diff = c["reps"] - p["reps"]
-            if 0 <= diff <= threshold:
-                entry = {"old": p["name"], "new": c["name"]}
-                if p["name"] in left_names or c["name"] in joined_names:
-                    possible.append(entry)
-                else:
-                    renames.append(entry)
-    return renames, possible
+            if 0 <= diff <= threshold and p["name"] not in left_names and c["name"] not in joined_names:
+                renames.append({"old": p["name"], "new": c["name"]})
+    return renames
 
 def diff_html(diff_str):
     if diff_str.startswith("+"):
@@ -320,7 +315,7 @@ def diff_html(diff_str):
     else:
         return f'<span class="na">{diff_str}</span>'
 
-def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None, goal_info=None, renames=None, changes=None, possible_renames=None):
+def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all_dates, show_changes, season_info=None, stats=None, diff_30m=None, goal_info=None, renames=None, changes=None):
     daily_rows = compute_diff(data["members"], prev_data)
     clan_name = data.get("clan_name", "Unknown")
     date_str = now.strftime("%Y-%m-%d")
@@ -378,15 +373,6 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
   <div class="changes">
     <div class="changes-title">Renamed ({len(renames)})</div>
     <div class="renamed-list"><ul>{rename_items}</ul></div>
-  </div>"""
-
-    possible_html = ""
-    if possible_renames:
-        possible_items = "".join(f'<li><span class="old-name">{r["old"]}</span> <span class="rename-arrow">&rarr;</span> <span class="new-name">{r["new"]}</span></li>' for r in possible_renames)
-        possible_html = f"""
-  <div class="changes">
-    <div class="changes-title">Possible Renames ({len(possible_renames)})</div>
-    <div class="renamed-list"><ul>{possible_items}</ul></div>
   </div>"""
 
     logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo" alt="Clairvoyant">' if logo_b64 else ""
@@ -1031,7 +1017,6 @@ window.__seasonEnd = \"""" + season_end_iso + """\";
   </div>
   {changes_html}
   {renamed_html}
-  {possible_html}
   <div class="footer">
     <div class="footer-updated" id="updated-ago"></div>
     Snapshot: <span id="snapshot-ts">{ts_str}</span>
@@ -1102,7 +1087,6 @@ def save_snapshot(data):
 
     changes = load_changes()
     renames = load_renames()
-    possible_renames = []
     if cache_30m and "order" in cache_30m:
         prev_list = [{"name": n, "reps": cache_30m["members"].get(n, 0)} for n in cache_30m["order"]]
         curr_list = [{"name": m["character_name"], "reps": m["member_reputation"]} for m in data["members"]]
@@ -1111,7 +1095,7 @@ def save_snapshot(data):
         curr_names = {m["name"] for m in curr_list}
         left_names = prev_names - curr_names
         joined_names = curr_names - prev_names
-        new_renames, possible_renames = detect_renames(prev_list, curr_list, left_names=left_names, joined_names=joined_names)
+        new_renames = detect_renames(prev_list, curr_list, left_names=left_names, joined_names=joined_names)
         for r in new_renames:
             r["detected_at"] = now_ts
         existing_pairs = set((r["old"], r["new"]) for r in renames)
@@ -1147,9 +1131,9 @@ def save_snapshot(data):
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, renames=renames, changes=changes, possible_renames=possible_renames)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, sorted(all_dates), show_changes=True, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, renames=renames, changes=changes)
     else:
-        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, renames=renames, changes=changes, possible_renames=possible_renames)
+        save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, renames=renames, changes=changes)
 
     save_30m_cache(data["members"], now)
     if is_hourly_mark:
