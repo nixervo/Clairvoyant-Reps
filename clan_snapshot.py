@@ -7,6 +7,7 @@ import json
 import time
 import sys
 import base64
+import re
 
 API_URL = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527"
 TARGET_TZ = timezone(timedelta(hours=8))
@@ -1093,20 +1094,22 @@ def save_snapshot(data):
 
     changes = load_changes()
     if cache_30m and "order" in cache_30m:
-        prev_list = [{"name": n, "reps": cache_30m["members"].get(n, 0)} for n in cache_30m["order"]]
-        curr_list = [{"name": m["character_name"], "reps": m["member_reputation"]} for m in data["members"]]
         now_ts = now.strftime("%Y-%m-%d %H:%M:%S")
-        prev_names = {m["name"] for m in prev_list}
-        curr_names = {m["name"] for m in curr_list}
-        left_names = prev_names - curr_names
-        joined_names = curr_names - prev_names
+        raw_prev = [re.sub(r' \(#\d+\)$', '', n) for n in cache_30m["order"]]
+        raw_curr = [m["character_name"] for m in data["members"]]
+        from collections import Counter
+        prev_count, curr_count = Counter(raw_prev), Counter(raw_curr)
         existing_change_keys = set((c["type"], c["name"]) for c in changes)
-        for n in sorted(left_names):
-            if ("left", n) not in existing_change_keys:
-                changes.append({"type": "left", "name": n, "detected_at": now_ts})
-        for n in sorted(joined_names):
-            if ("joined", n) not in existing_change_keys:
-                changes.append({"type": "joined", "name": n, "detected_at": now_ts})
+        for name, cnt in prev_count.items():
+            diff = cnt - curr_count.get(name, 0)
+            for _ in range(diff):
+                if ("left", name) not in existing_change_keys:
+                    changes.append({"type": "left", "name": name, "detected_at": now_ts})
+        for name, cnt in curr_count.items():
+            diff = cnt - prev_count.get(name, 0)
+            for _ in range(diff):
+                if ("joined", name) not in existing_change_keys:
+                    changes.append({"type": "joined", "name": name, "detected_at": now_ts})
         save_changes(changes)
  
     goal_info = compute_goal_info(clan_reputation)
