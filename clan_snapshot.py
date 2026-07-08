@@ -51,6 +51,23 @@ def get_previous_sheet_names(wb):
     names.sort()
     return names
 
+def get_unique_names(members):
+    """Returns list of (api_name, display_name) tuples."""
+    name_count = {}
+    for m in members:
+        nm = m["character_name"]
+        name_count[nm] = name_count.get(nm, 0) + 1
+    counter = {}
+    result = []
+    for m in members:
+        nm = m["character_name"]
+        if name_count[nm] > 1:
+            counter[nm] = counter.get(nm, 0) + 1
+            result.append((nm, f"{nm} (#{counter[nm]})"))
+        else:
+            result.append((nm, nm))
+    return result
+
 def load_prev_from_xlsx(filename, before_date):
     prev_data = []
     prev_timestamp = None
@@ -81,10 +98,10 @@ def load_hourly_cache():
         c = json.load(f)
     return c.get("members", {}), c.get("timestamp")
 
-def save_hourly_cache(members, now):
+def save_hourly_cache(members, unique_names, now):
     cache = {
         "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
-        "members": {m["character_name"]: m["member_reputation"] for m in members}
+        "members": {unique_names[i][1]: m["member_reputation"] for i, m in enumerate(members)},
     }
     with open(HOURLY_CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f)
@@ -95,11 +112,11 @@ def load_30m_cache():
     with open(CACHE_30M, encoding="utf-8") as f:
         return json.load(f)
 
-def save_30m_cache(members, now):
+def save_30m_cache(members, unique_names):
     cache = {
-        "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
-        "members": {m["character_name"]: m["member_reputation"] for m in members},
-        "order": [m["character_name"] for m in members],
+        "timestamp": datetime.now(TARGET_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+        "members": {unique_names[i][1]: m["member_reputation"] for i, m in enumerate(members)},
+        "order": [unique_names[i][1] for i, _ in enumerate(members)],
     }
     with open(CACHE_30M, "w", encoding="utf-8") as f:
         json.dump(cache, f)
@@ -157,13 +174,14 @@ def compute_diff(members, prev_data):
         result.append((name, reps, diff_str))
     return result
 
-def write_sheet(ws, data, prev_data, now):
+def write_sheet(ws, data, prev_data, now, unique_names):
+    uniq = unique_names if unique_names else get_unique_names(data["members"])
     rows = compute_diff(data["members"], prev_data)
+    daily_lookup = {name: diff for name, _, diff in rows}
+    names = [uniq[i][1] for i in range(len(uniq))]
+    reps = [str(m["member_reputation"]) for m in data["members"]]
+    diffs = [daily_lookup.get(m["character_name"], "N/A") for m in data["members"]]
     ws.title = now.strftime("%Y-%m-%d")
-
-    names = [r[0] for r in rows]
-    reps = [str(r[1]) for r in rows]
-    diffs = [r[2] for r in rows]
 
     max_name = max((len(n) for n in names), default=10)
     max_reps = max((len(r) for r in reps), default=4)
@@ -195,7 +213,7 @@ def write_sheet(ws, data, prev_data, now):
         ws.cell(row=row_idx, column=2, value=reps_val).alignment = Alignment(horizontal="center", vertical="center")
         ws.cell(row=row_idx, column=3, value=diff_val).alignment = Alignment(horizontal="center", vertical="center")
 
-def save_xlsx(data, prev_data, now):
+def save_xlsx(data, prev_data, now, uniq):
     sheet_name = now.strftime("%Y-%m-%d")
 
     if os.path.exists(EXCEL_FILE):
@@ -207,7 +225,7 @@ def save_xlsx(data, prev_data, now):
         del wb[sheet_name]
 
     ws = wb.create_sheet(title=sheet_name)
-    write_sheet(ws, data, prev_data, now)
+    write_sheet(ws, data, prev_data, now, uniq)
 
     if "Sheet" in wb.sheetnames and len(wb.sheetnames) > 1:
         del wb["Sheet"]
@@ -321,9 +339,11 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     )
 
     diffs_30m_map = diff_30m.get("diffs", {}) if isinstance(diff_30m, dict) else {}
+    daily_lookup = {name: diff for name, _, diff in daily_rows}
+    uniq_names = get_unique_names(data["members"])
     table_rows = "".join(
-        f"<tr><td class=\"num\">{i+1}</td><td>{name}</td><td class=\"num\">{reps}</td><td class=\"num\">{diff_html(diffs_30m_map.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(hourly_diffs.get(name, 'N/A'))}</td><td class=\"num\">{diff_html(daily_diff)}</td></tr>"
-        for i, (name, reps, daily_diff) in enumerate(daily_rows)
+        f"<tr><td class=\"num\">{i+1}</td><td>{uniq_names[i][1]}</td><td class=\"num\">{m['member_reputation']}</td><td class=\"num\">{diff_html(diffs_30m_map.get(uniq_names[i][1], 'N/A'))}</td><td class=\"num\">{diff_html(hourly_diffs.get(uniq_names[i][1], 'N/A'))}</td><td class=\"num\">{diff_html(daily_lookup.get(m['character_name'], 'N/A'))}</td></tr>"
+        for i, m in enumerate(data["members"])
     )
 
     changes_html = ""
@@ -491,7 +511,7 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
       } else { clan = rk; }
     }
     var n = new Date(), nm = n.getMinutes(), ns = ts();
-    var lm = {}; for (var i = 0; i < d.length; i++) lm[d[i].character_name] = d[i].member_reputation;
+    var lm = {}; for (var i = 0; i < d.length; i++) lm[i < names.length ? names[i] : d[i].character_name] = d[i].member_reputation;
     var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
     var c30 = null, c1h = null; try { c30 = JSON.parse(localStorage.getItem("nr_30m")); c1h = JSON.parse(localStorage.getItem("nr_1h")); } catch(e) {}
     if (!c1h && window.__hourlyCache) c1h = {rs: window.__hourlyCache, ts: ""};
@@ -508,7 +528,7 @@ window.__hourlyCache = """ + json.dumps(hourly_cache if hourly_cache else {}) + 
         names.push(_n);
         var tr = document.createElement("tr");
         tr.className = "new-row";
-        tr.innerHTML = '<td>' + _n + '</td><td class="num">' + lm[_n] + '</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td>';
+        tr.innerHTML = '<td class="num"></td><td>' + _n + '</td><td class="num">' + lm[_n] + '</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td>';
         tb.appendChild(tr);
         if (searchEl && searchEl.value && _n.toLowerCase().indexOf(searchEl.value.toLowerCase()) === -1) tr.style.display = "none";
       }
@@ -1024,34 +1044,36 @@ def save_snapshot(data):
 
     prev_data, prev_timestamp = load_prev_from_xlsx(EXCEL_FILE, sheet_name)
 
+    uniq = get_unique_names(data["members"])
+
     cache_1h = load_1h_cache()
     hourly_diffs = {}
     hourly_ts = ""
     if cache_1h and cache_1h.get("members"):
         hourly_ts = cache_1h.get("timestamp", "")
-        for m in data["members"]:
-            name = m["character_name"]
+        for i, m in enumerate(data["members"]):
+            uni_name = uniq[i][1]
             reps = m["member_reputation"]
             memb = cache_1h["members"]
-            if name in memb:
-                diff = reps - memb[name]
-                hourly_diffs[name] = f"+{diff}" if diff > 0 else str(diff)
+            if uni_name in memb:
+                diff = reps - memb[uni_name]
+                hourly_diffs[uni_name] = f"+{diff}" if diff > 0 else str(diff)
             else:
-                hourly_diffs[name] = "N/A"
+                hourly_diffs[uni_name] = "N/A"
 
     cache_30m = load_30m_cache()
     diffs_30m = {}
     ref_30m_ts = ""
     if cache_30m:
         ref_30m_ts = cache_30m.get("timestamp", "")
-        for m in data["members"]:
-            name = m["character_name"]
+        for i, m in enumerate(data["members"]):
+            uni_name = uniq[i][1]
             reps = m["member_reputation"]
-            if name in cache_30m.get("members", {}):
-                diff = reps - cache_30m["members"][name]
-                diffs_30m[name] = f"+{diff}" if diff > 0 else str(diff)
+            if uni_name in cache_30m.get("members", {}):
+                diff = reps - cache_30m["members"][uni_name]
+                diffs_30m[uni_name] = f"+{diff}" if diff > 0 else str(diff)
             else:
-                diffs_30m[name] = "N/A"
+                diffs_30m[uni_name] = "N/A"
     diff_30m_data = {"ts": ref_30m_ts, "diffs": diffs_30m}
 
     try:
@@ -1100,7 +1122,7 @@ def save_snapshot(data):
     is_hourly_mark = (now.minute <= 1)
 
     if is_daily:
-        save_xlsx(data, prev_data, now)
+        save_xlsx(data, prev_data, now, uniq)
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
@@ -1108,11 +1130,11 @@ def save_snapshot(data):
     else:
         save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, [], show_changes=False, season_info=season_info, stats=stats, diff_30m=diff_30m_data, goal_info=goal_info, changes=changes, hourly_cache=cache_1h["members"] if cache_1h else {})
 
-    save_30m_cache(data["members"], now)
+    save_30m_cache(data["members"], uniq)
     if cache_30m:
         save_1h_cache(cache_30m.get("members", {}), cache_30m.get("timestamp", ""))
     if is_hourly_mark:
-        save_hourly_cache(data["members"], now)
+        save_hourly_cache(data["members"], uniq, now)
 
     if season_info and now >= end_dt and avg_daily is not None:
         save_seasonal_xlsx(data["members"], season_info["season"])
