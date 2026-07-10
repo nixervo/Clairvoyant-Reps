@@ -1159,11 +1159,11 @@ def save_daily_history():
     sheets_data = []
     for s in names:
         ws = wb[s]
-        members = {}
+        members = []
         for row in ws.iter_rows(min_row=4, max_col=2, values_only=True):
             name = str(row[0]).strip() if row[0] else ""
             if name and row[1] is not None:
-                members[name] = int(row[1])
+                members.append((name, int(row[1])))
         sheets_data.append({"date": s, "members": members})
     css = """<style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1202,14 +1202,20 @@ def save_daily_history():
         dt = datetime.strptime(date, "%Y-%m-%d")
         day_name = dt.strftime("%a")
         threshold = 1000 if dt.weekday() in (6, 0) else 500
-        gains, all_names = [], set(curr["members"]) | set(prev["members"])
-        for name in all_names:
-            if name in curr["members"] and name in prev["members"]:
-                gains.append({"name": name, "gain": curr["members"][name] - prev["members"][name], "joined": False, "left": False})
-            elif name in curr["members"]:
-                gains.append({"name": name, "gain": None, "joined": True, "left": False})
+        prev_list, curr_list = prev["members"], curr["members"]
+        max_len = max(len(prev_list), len(curr_list))
+        gains = []
+        for j in range(max_len):
+            if j < len(prev_list) and j < len(curr_list):
+                pname, prep = prev_list[j]
+                cname, crep = curr_list[j]
+                gains.append({"name": cname, "gain": crep - prep, "joined": False, "left": False})
+            elif j < len(curr_list):
+                cname, crep = curr_list[j]
+                gains.append({"name": cname, "gain": None, "joined": True, "left": False})
             else:
-                gains.append({"name": name, "gain": None, "joined": False, "left": True})
+                pname, prep = prev_list[j]
+                gains.append({"name": pname, "gain": None, "joined": False, "left": True})
         gains.sort(key=lambda x: (x["gain"] is None, -(x["gain"] or 0)))
         met_count = sum(1 for g in gains if g["gain"] is not None and g["gain"] >= threshold)
         total_current = len(curr["members"])
