@@ -1000,7 +1000,6 @@ window.__30mCache = """ + json.dumps(cache_30m["members"] if cache_30m and "memb
   {timer_html}
   {stats_html}
   {goal_html}
-  {f'<div class="archive">{archive_links}</div>' if archive_links else ""}
   <div class="live-bar">
     <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
       <input type="text" id="search-input" placeholder="Search member...">
