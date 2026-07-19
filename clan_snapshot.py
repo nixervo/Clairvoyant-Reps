@@ -1102,14 +1102,16 @@ def save_snapshot(data):
     except:
         pass
     current_season = season_info.get("season") if season_info else None
+    transition_detected = False
     if current_season and last_season and current_season > last_season:
         hist_url = f"https://playninjarift.com/api/detail_clan_history.php?clan_id={CLAN_ID}&season={last_season}&query_type=members"
         try:
             req = urllib.request.Request(hist_url, headers={"User-Agent": "clan-snapshot/1.0"})
             with urllib.request.urlopen(req, timeout=10) as resp:
                 hist_data = json.loads(resp.read().decode())
-            data["members"] = hist_data["members"]
-            print(f"Season {last_season} -> {current_season}: using history API for final reps")
+            save_seasonal_xlsx(hist_data["members"], last_season)
+            print(f"Season {last_season} -> {current_season}: saved seasonal XLSX for season {last_season}")
+            transition_detected = True
         except Exception as e:
             print(f"History API error: {e}")
     if current_season:
@@ -1175,7 +1177,7 @@ def save_snapshot(data):
     if is_hourly_mark:
         save_hourly_cache(data["members"], uniq, now)
 
-    if season_info and now >= end_dt and avg_daily is not None:
+    if season_info and now >= end_dt and avg_daily is not None and not transition_detected:
         save_seasonal_xlsx(data["members"], season_info["season"])
 
     try:
@@ -1259,39 +1261,23 @@ def save_daily_history():
         total_prev = sum(prev_map.values())
         total_curr = sum(rep for _, rep in curr["members"])
         is_new_season = total_prev > 0 and total_curr < total_prev * 0.05
-        if is_new_season:
-            old_season = prev.get("season") or 61
-            hist_url = f"https://playninjarift.com/api/detail_clan_history.php?clan_id={CLAN_ID}&season={old_season}&query_type=members"
-            try:
-                req = urllib.request.Request(hist_url, headers={"User-Agent": "clan-snapshot/1.0"})
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    hist_data = json.loads(resp.read().decode())
-                fixed_members = [(m["character_name"], int(m["member_reputation"])) for m in hist_data["members"]]
-                curr["members"] = fixed_members
-                curr["season"] = old_season
-                curr_set = {name for name, _ in fixed_members}
-                total_curr = sum(rep for _, rep in fixed_members)
-                ws_curr = wb[curr["date"]]
-                for row_idx, (name, rep) in enumerate(fixed_members, 4):
-                    ws_curr.cell(row=row_idx, column=1, value=name)
-                    ws_curr.cell(row=row_idx, column=2, value=rep)
-                a1_val = ws_curr["A1"].value or ""
-                if "|" not in a1_val:
-                    ws_curr["A1"] = f"{a1_val} | S{old_season}"
-                print(f"  Fixed zeroed sheet {curr['date']} with season {old_season} history API ({len(fixed_members)} members)")
-                is_new_season = False
-            except Exception as e:
-                print(f"  History API fix failed for {curr['date']}: {e}")
         gains = []
-        for name, rep in curr["members"]:
-            if name in prev_map:
-                gain = rep - prev_map[name]
-                gains.append({"name": name, "gain": gain, "joined": False, "left": False})
-            else:
-                gains.append({"name": name, "gain": None, "joined": True, "left": False})
-        for name in prev_map:
-            if name not in curr_set:
-                gains.append({"name": name, "gain": None, "joined": False, "left": True})
+        if is_new_season:
+            for name, rep in curr["members"]:
+                gains.append({"name": name, "gain": None, "joined": False, "left": False})
+            for name in prev_map:
+                if name not in curr_set:
+                    gains.append({"name": name, "gain": None, "joined": False, "left": True})
+        else:
+            for name, rep in curr["members"]:
+                if name in prev_map:
+                    gain = rep - prev_map[name]
+                    gains.append({"name": name, "gain": gain, "joined": False, "left": False})
+                else:
+                    gains.append({"name": name, "gain": None, "joined": True, "left": False})
+            for name in prev_map:
+                if name not in curr_set:
+                    gains.append({"name": name, "gain": None, "joined": False, "left": True})
         gains.sort(key=lambda x: (x["gain"] is None, -(x["gain"] or 0)))
         met_count = sum(1 for g in gains if g["gain"] is not None and g["gain"] >= threshold)
         total_current = len(curr["members"])
@@ -1403,10 +1389,6 @@ def save_daily_history():
         f.write(index_html)
     print(f"[{datetime.now(TARGET_TZ).strftime('%Y-%m-%d %H:%M:%S')}] Saved history.html")
 
-    try:
-        wb.save(EXCEL_FILE)
-    except Exception:
-        pass
 
 def run():
     print("Clan snapshot daemon started. Running every 30 minutes.")
