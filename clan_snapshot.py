@@ -1344,7 +1344,20 @@ def save_daily_history():
         is_current = (s_num == current_season)
         current_badge = f' <span class="current-badge">[CURRENT]</span>' if is_current else ""
         arrow = '<span class="arrow">&#9654;</span>'
+        archive_path = f"S{s_num}_ID{CLAN_ID}.xlsx"
+        archive_link = ""
+        try:
+            if os.path.exists(archive_path):
+                awb = load_workbook(archive_path)
+                aws = awb.active
+                atotal = sum((r[1] or 0) for r in aws.iter_rows(min_row=2, max_col=2, values_only=True))
+                if atotal > 0:
+                    archive_link = f'<a href="{archive_path}" style="display:block;padding:8px 14px;color:#e94560;text-decoration:none;font-size:13px;font-weight:600;border-bottom:1px solid #14141f;">⬇ Season {s_num} Archive (XLSX)</a>\n'
+        except:
+            pass
         index_rows += f'<details class="season-wrap"{" open" if is_current else ""}><summary>{arrow} SEASON {s_num}{current_badge}</summary>\n'
+        if archive_link:
+            index_rows += archive_link
         for dp in pages:
             index_rows += f'<a href="history_{dp["date"]}.html">{dp["date"]} ({dp["day_name"]}) <span class="met">{dp["met"]}/{dp["total"]}</span> met &rarr;</a>\n'
         index_rows += '</details>\n'
