@@ -1289,6 +1289,8 @@ def save_daily_history():
         met_count = sum(1 for g in gains if g["gain"] is not None and g["gain"] >= threshold)
         total_current = len(curr["members"])
         curr_season = curr.get("season") or prev.get("season") or ""
+        if is_new_season and prev.get("season"):
+            curr_season = prev.get("season")
         daily_pages.append({"date": date, "day_name": day_name, "threshold": threshold, "met": met_count, "total": total_current, "season": curr_season})
         rows_html = ""
         if is_new_season:
