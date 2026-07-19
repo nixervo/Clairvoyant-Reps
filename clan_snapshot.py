@@ -1117,7 +1117,11 @@ def save_snapshot(data):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 hist_data = json.loads(resp.read().decode())
             save_seasonal_xlsx(hist_data["members"], last_season)
-            print(f"Season {last_season} -> {current_season}: saved seasonal XLSX for season {last_season}")
+            if is_daily:
+                data["members"] = hist_data["members"]
+                print(f"Season {last_season} -> {current_season}: using history API for final reps")
+            else:
+                print(f"Season {last_season} -> {current_season}: saved seasonal XLSX for season {last_season}")
             transition_detected = True
         except Exception as e:
             print(f"History API error: {e}")
@@ -1271,7 +1275,7 @@ def save_daily_history():
         gains = []
         if is_new_season:
             for name, rep in curr["members"]:
-                gains.append({"name": name, "gain": None, "joined": False, "left": False})
+                gains.append({"name": name, "gain": rep, "joined": False, "left": False})
             for name in prev_map:
                 if name not in curr_set:
                     gains.append({"name": name, "gain": None, "joined": False, "left": True})
@@ -1289,8 +1293,6 @@ def save_daily_history():
         met_count = sum(1 for g in gains if g["gain"] is not None and g["gain"] >= threshold)
         total_current = len(curr["members"])
         curr_season = curr.get("season") or prev.get("season") or ""
-        if is_new_season and prev.get("season"):
-            curr_season = prev.get("season")
         daily_pages.append({"date": date, "day_name": day_name, "threshold": threshold, "met": met_count, "total": total_current, "season": curr_season})
         rows_html = ""
         if is_new_season:
