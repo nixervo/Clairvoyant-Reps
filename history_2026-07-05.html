@@ -36,67 +36,76 @@
   .index-list .met { color: #4caf50; font-weight: 600; }
   .star-joined { color: #42a5f5; }
   .star-left { color: #f44336; }
+  details.season-wrap { margin: 0; }
+  details.season-wrap > summary { cursor: pointer; padding: 10px 14px; font-size: 15px; font-weight: 700; color: #e94560; background: #0f0f0f; border-bottom: 1px solid #14141f; user-select: none; list-style: none; display: flex; align-items: center; gap: 6px; }
+  details.season-wrap > summary::-webkit-details-marker { display: none; }
+  details.season-wrap > summary:hover { background: rgba(233,69,96,0.05); }
+  details.season-wrap > summary .arrow { font-size: 12px; color: #888; transition: transform .15s; }
+  details.season-wrap[open] > summary .arrow { transform: rotate(90deg); }
+  .current-badge { font-size: 11px; font-weight: 400; color: #666; background: #222; padding: 1px 8px; border-radius: 8px; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · 2026-07-05 (Sun) &middot; Min: <b>1,000</b></div></div>
-  <div class="summary">20 of 54 members met the threshold (1,000)</div>
+  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · 2026-07-05 (Sun)Min: <b>1,000</b></div></div>
+  <div class="summary">21 of 54 members met the threshold (1,000)</div>
   <div class="nav"><a href="history_2026-07-04.html">&larr; Previous</a><a href="history.html">Index</a><a href="history_2026-07-06.html">Next &rarr;</a></div>
-  <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Gain</th><th>Status</th></tr></thead><tbody><tr class="green"><td>1</td><td>Elavoth</td><td>+2,332</td><td>✅</td></tr>
-<tr class="green"><td>2</td><td>Shadow</td><td>+2,290</td><td>✅</td></tr>
-<tr class="green"><td>3</td><td>Mahsuri</td><td>+2,248</td><td>✅</td></tr>
-<tr class="green"><td>4</td><td>Dracoth</td><td>+2,204</td><td>✅</td></tr>
-<tr class="green"><td>5</td><td>Parameswara</td><td>+2,102</td><td>✅</td></tr>
-<tr class="green"><td>6</td><td>Assassin</td><td>+2,076</td><td>✅</td></tr>
-<tr class="green"><td>7</td><td>Summoth</td><td>+1,964</td><td>✅</td></tr>
-<tr class="green"><td>8</td><td>Hang Tuah</td><td>+1,838</td><td>✅</td></tr>
-<tr class="green"><td>9</td><td>Zenith</td><td>+1,804</td><td>✅</td></tr>
-<tr class="green"><td>10</td><td>Maximoth</td><td>+1,692</td><td>✅</td></tr>
-<tr class="green"><td>11</td><td>2</td><td>+1,690</td><td>✅</td></tr>
-<tr class="green"><td>12</td><td>Mahawangsa</td><td>+1,574</td><td>✅</td></tr>
-<tr class="green"><td>13</td><td>Astraphel</td><td>+1,560</td><td>✅</td></tr>
-<tr class="green"><td>14</td><td>Heracoth</td><td>+1,520</td><td>✅</td></tr>
-<tr class="green"><td>15</td><td>Tears</td><td>+1,479</td><td>✅</td></tr>
-<tr class="green"><td>16</td><td>Noir</td><td>+1,436</td><td>✅</td></tr>
-<tr class="green"><td>17</td><td>Tun Teja</td><td>+1,408</td><td>✅</td></tr>
-<tr class="green"><td>18</td><td>KOPZ2</td><td>+1,242</td><td>✅</td></tr>
-<tr class="green"><td>19</td><td>yatoro</td><td>+1,163</td><td>✅</td></tr>
-<tr class="green"><td>20</td><td>COPZ1</td><td>+1,039</td><td>✅</td></tr>
-<tr class="red"><td>21</td><td>Aluphiee</td><td>+885</td><td>❌</td></tr>
-<tr class="red"><td>22</td><td>Ryzeee</td><td>+839</td><td>❌</td></tr>
-<tr class="red"><td>23</td><td>PuNch</td><td>+779</td><td>❌</td></tr>
-<tr class="red"><td>24</td><td>OROCHIMARU</td><td>+675</td><td>❌</td></tr>
-<tr class="red"><td>25</td><td>Jork</td><td>+576</td><td>❌</td></tr>
-<tr class="red"><td>26</td><td>§hitnobi</td><td>+548</td><td>❌</td></tr>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Gain</th><th>Status</th></tr></thead><tbody><tr class="green"><td>1</td><td>Player</td><td>+2,798</td><td>✅</td></tr>
+<tr class="green"><td>2</td><td>Elavoth</td><td>+2,332</td><td>✅</td></tr>
+<tr class="green"><td>3</td><td>Shadow</td><td>+2,290</td><td>✅</td></tr>
+<tr class="green"><td>4</td><td>Mahsuri</td><td>+2,248</td><td>✅</td></tr>
+<tr class="green"><td>5</td><td>Dracoth</td><td>+2,204</td><td>✅</td></tr>
+<tr class="green"><td>6</td><td>Parameswara</td><td>+2,102</td><td>✅</td></tr>
+<tr class="green"><td>7</td><td>Assassin</td><td>+2,076</td><td>✅</td></tr>
+<tr class="green"><td>8</td><td>Summoth</td><td>+1,964</td><td>✅</td></tr>
+<tr class="green"><td>9</td><td>Hang Tuah</td><td>+1,838</td><td>✅</td></tr>
+<tr class="green"><td>10</td><td>Zenith</td><td>+1,804</td><td>✅</td></tr>
+<tr class="green"><td>11</td><td>Maximoth</td><td>+1,692</td><td>✅</td></tr>
+<tr class="green"><td>12</td><td>2</td><td>+1,690</td><td>✅</td></tr>
+<tr class="green"><td>13</td><td>Mahawangsa</td><td>+1,574</td><td>✅</td></tr>
+<tr class="green"><td>14</td><td>Astraphel</td><td>+1,560</td><td>✅</td></tr>
+<tr class="green"><td>15</td><td>Heracoth</td><td>+1,520</td><td>✅</td></tr>
+<tr class="green"><td>16</td><td>Tears</td><td>+1,479</td><td>✅</td></tr>
+<tr class="green"><td>17</td><td>Noir</td><td>+1,436</td><td>✅</td></tr>
+<tr class="green"><td>18</td><td>Tun Teja</td><td>+1,408</td><td>✅</td></tr>
+<tr class="green"><td>19</td><td>KOPZ2</td><td>+1,242</td><td>✅</td></tr>
+<tr class="green"><td>20</td><td>yatoro</td><td>+1,163</td><td>✅</td></tr>
+<tr class="green"><td>21</td><td>COPZ1</td><td>+1,039</td><td>✅</td></tr>
+<tr class="red"><td>22</td><td>Aluphiee</td><td>+885</td><td>❌</td></tr>
+<tr class="red"><td>23</td><td>Ryzeee</td><td>+839</td><td>❌</td></tr>
+<tr class="red"><td>24</td><td>PuNch</td><td>+779</td><td>❌</td></tr>
+<tr class="red"><td>25</td><td>OROCHIMARU</td><td>+675</td><td>❌</td></tr>
+<tr class="red"><td>26</td><td>Jork</td><td>+576</td><td>❌</td></tr>
 <tr class="red"><td>27</td><td>§hitnobi</td><td>+547</td><td>❌</td></tr>
-<tr class="red"><td>28</td><td>Player</td><td>+527</td><td>❌</td></tr>
-<tr class="red"><td>29</td><td>§hitnobi</td><td>+524</td><td>❌</td></tr>
-<tr class="red"><td>30</td><td>§hitnobi</td><td>+524</td><td>❌</td></tr>
-<tr class="red"><td>31</td><td>§hitnobi</td><td>+506</td><td>❌</td></tr>
-<tr class="red"><td>32</td><td>Sugar Talking</td><td>+169</td><td>❌</td></tr>
-<tr class="red"><td>33</td><td>My Man on Willpower</td><td>+99</td><td>❌</td></tr>
-<tr class="red"><td>34</td><td>CatDile</td><td>+82</td><td>❌</td></tr>
-<tr class="red"><td>35</td><td>gokito</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>36</td><td>MY | Kosuke Ueki X</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>37</td><td>MY | iMuiz</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>38</td><td>MY | iMuiz X</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>39</td><td>warrior</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>40</td><td>Nasi Goreng Kampung</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>41</td><td>MY | Player 006</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>42</td><td>MY | Player 007</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>43</td><td>MY | Player 008</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>44</td><td>MY | Player 009</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>45</td><td>MY | Player 010</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>46</td><td>MY | Player 001</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>47</td><td>MY | Naruke</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>48</td><td>Lotus</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>49</td><td>Deucedrag</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>50</td><td>iZengotsou</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>51</td><td>MY | Player 002</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>52</td><td>MY | Player 003</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>53</td><td>Player</td><td>+0</td><td>❌</td></tr>
-<tr class="red"><td>54</td><td>Ryugai</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>28</td><td>§hitnobi</td><td>+535</td><td>❌</td></tr>
+<tr class="red"><td>29</td><td>Player</td><td>+527</td><td>❌</td></tr>
+<tr class="red"><td>30</td><td>CatDile</td><td>+82</td><td>❌</td></tr>
+<tr class="red"><td>31</td><td>gokito</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>32</td><td>MY | Kosuke Ueki X</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>33</td><td>MY | iMuiz</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>34</td><td>MY | iMuiz X</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>35</td><td>warrior</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>36</td><td>Nasi Goreng Kampung</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>37</td><td>MY | Player 006</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>38</td><td>MY | Player 007</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>39</td><td>MY | Player 008</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>40</td><td>MY | Player 009</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>41</td><td>MY | Player 010</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>42</td><td>MY | Player 001</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>43</td><td>MY | Naruke</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>44</td><td>Lotus</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>45</td><td>Deucedrag</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>46</td><td>iZengotsou</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>47</td><td>MY | Player 002</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>48</td><td>MY | Player 003</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>49</td><td>Ryugai</td><td>+0</td><td>❌</td></tr>
+<tr class="red"><td>50</td><td>§hitnobi</td><td>+-1,195</td><td>❌</td></tr>
+<tr class="red"><td>51</td><td>§hitnobi</td><td>+-1,222</td><td>❌</td></tr>
+<tr class="red"><td>52</td><td>§hitnobi</td><td>+-1,258</td><td>❌</td></tr>
+<tr class=""><td>53</td><td><span class="star-joined">&#9733;</span> Sugar Talking</td><td><span class="star-left">N/A</span></td><td>❌</td></tr>
+<tr class=""><td>54</td><td><span class="star-joined">&#9733;</span> My Man on Willpower</td><td><span class="star-left">N/A</span></td><td>❌</td></tr>
+<tr class=""><td>55</td><td><span class="star-left">&#9734;</span> GON</td><td><span class="star-left">N/A</span></td><td>❌</td></tr>
+<tr class=""><td>56</td><td><span class="star-left">&#9734;</span> Eucresia X</td><td><span class="star-left">N/A</span></td><td>❌</td></tr>
 </tbody></table></div>
   <div class="footer"><a href="index.html">&larr; Back to main page</a></div>
 </div>

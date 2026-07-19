@@ -24,6 +24,7 @@ GOAL_TIERS = [
     (1600000, "Jutsu"),
 ]
 CHANGES_JSON = "_changes.json"
+SEASON_CACHE = "_season_cache.json"
 
 def fetch_clan():
     req = urllib.request.Request(API_URL, headers={"User-Agent": "clan-snapshot/1.0"})
@@ -175,7 +176,7 @@ def compute_diff(members, prev_data):
         result.append((name, reps, diff_str))
     return result
 
-def write_sheet(ws, data, prev_data, now, unique_names):
+def write_sheet(ws, data, prev_data, now, unique_names, season_num=None):
     uniq = unique_names if unique_names else get_unique_names(data["members"])
     rows = compute_diff(data["members"], prev_data)
     daily_lookup = {name: diff for name, _, diff in rows}
@@ -194,7 +195,8 @@ def write_sheet(ws, data, prev_data, now, unique_names):
 
     clan_name = data.get("clan_name", "Unknown")
     ws.merge_cells("A1:C1")
-    ws["A1"] = f"Clan: {clan_name} ({CLAN_ID})"
+    meta = f" | S{season_num}" if season_num else ""
+    ws["A1"] = f"Clan: {clan_name} ({CLAN_ID}){meta}"
     ws["A1"].font = Font(bold=True, size=13)
     ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
 
@@ -214,7 +216,7 @@ def write_sheet(ws, data, prev_data, now, unique_names):
         ws.cell(row=row_idx, column=2, value=reps_val).alignment = Alignment(horizontal="center", vertical="center")
         ws.cell(row=row_idx, column=3, value=diff_val).alignment = Alignment(horizontal="center", vertical="center")
 
-def save_xlsx(data, prev_data, now, uniq):
+def save_xlsx(data, prev_data, now, uniq, season_info=None):
     sheet_name = now.strftime("%Y-%m-%d")
 
     if os.path.exists(EXCEL_FILE):
@@ -226,10 +228,17 @@ def save_xlsx(data, prev_data, now, uniq):
         del wb[sheet_name]
 
     ws = wb.create_sheet(title=sheet_name)
-    write_sheet(ws, data, prev_data, now, uniq)
+    season_num = season_info.get("season") if season_info else None
+    write_sheet(ws, data, prev_data, now, uniq, season_num)
 
     if "Sheet" in wb.sheetnames and len(wb.sheetnames) > 1:
         del wb["Sheet"]
+
+    if season_num:
+        for existing_ws in wb.worksheets:
+            a1 = existing_ws["A1"].value or ""
+            if "|" not in a1:
+                existing_ws["A1"] = f"{a1} | S{season_num}"
 
     wb.save(EXCEL_FILE)
     print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] Saved sheet '{sheet_name}' to {EXCEL_FILE}")
@@ -1083,6 +1092,27 @@ def save_snapshot(data):
     except Exception:
         season_info = None
 
+    last_season = None
+    try:
+        with open(SEASON_CACHE) as f:
+            last_season = json.load(f).get("season")
+    except:
+        pass
+    current_season = season_info.get("season") if season_info else None
+    if current_season and last_season and current_season > last_season:
+        hist_url = f"https://playninjarift.com/api/detail_clan_history.php?clan_id={CLAN_ID}&season={last_season}&query_type=members"
+        try:
+            req = urllib.request.Request(hist_url, headers={"User-Agent": "clan-snapshot/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                hist_data = json.loads(resp.read().decode())
+            data["members"] = hist_data["members"]
+            print(f"Season {last_season} -> {current_season}: using history API for final reps")
+        except Exception as e:
+            print(f"History API error: {e}")
+    if current_season:
+        with open(SEASON_CACHE, "w") as f:
+            json.dump({"season": current_season}, f)
+
     try:
         ranking = fetch_clan_ranking()
         clan_reputation = ranking.get("clan_reputation", 0)
@@ -1126,7 +1156,7 @@ def save_snapshot(data):
     is_hourly_mark = (now.minute <= 1)
 
     if is_daily:
-        save_xlsx(data, prev_data, now, uniq)
+        save_xlsx(data, prev_data, now, uniq, season_info)
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
@@ -1163,7 +1193,16 @@ def save_daily_history():
             name = str(row[0]).strip() if row[0] else ""
             if name and row[1] is not None:
                 members.append((name, int(row[1])))
-        sheets_data.append({"date": s, "members": members})
+        season_num = None
+        try:
+            a1 = ws["A1"].value or ""
+            if "|" in a1:
+                meta = a1.rsplit("|", 1)[1].strip()
+                if meta.startswith("S"):
+                    season_num = int(meta[1:])
+        except:
+            pass
+        sheets_data.append({"date": s, "members": members, "season": season_num})
     css = """<style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #080810; color: #e0e0e0; min-height: 100vh; display: flex; justify-content: center; padding: 32px 16px; }
@@ -1193,6 +1232,13 @@ def save_daily_history():
   .index-list .met { color: #4caf50; font-weight: 600; }
   .star-joined { color: #42a5f5; }
   .star-left { color: #f44336; }
+  details.season-wrap { margin: 0; }
+  details.season-wrap > summary { cursor: pointer; padding: 10px 14px; font-size: 15px; font-weight: 700; color: #e94560; background: #0f0f0f; border-bottom: 1px solid #14141f; user-select: none; list-style: none; display: flex; align-items: center; gap: 6px; }
+  details.season-wrap > summary::-webkit-details-marker { display: none; }
+  details.season-wrap > summary:hover { background: rgba(233,69,96,0.05); }
+  details.season-wrap > summary .arrow { font-size: 12px; color: #888; transition: transform .15s; }
+  details.season-wrap[open] > summary .arrow { transform: rotate(90deg); }
+  .current-badge { font-size: 11px; font-weight: 400; color: #666; background: #222; padding: 1px 8px; border-radius: 8px; }
 </style>"""
     daily_pages = []
     for i in range(1, len(sheets_data)):
@@ -1201,25 +1247,29 @@ def save_daily_history():
         dt = datetime.strptime(date, "%Y-%m-%d")
         day_name = dt.strftime("%a")
         threshold = 1000 if dt.weekday() in (6, 0) else 500
-        prev_list, curr_list = prev["members"], curr["members"]
-        max_len = max(len(prev_list), len(curr_list))
+        prev_map = {name: rep for name, rep in prev["members"]}
+        curr_set = {name for name, _ in curr["members"]}
+        total_prev = sum(prev_map.values())
+        total_curr = sum(rep for _, rep in curr["members"])
+        is_new_season = total_prev > 0 and total_curr < total_prev * 0.05
         gains = []
-        for j in range(max_len):
-            if j < len(prev_list) and j < len(curr_list):
-                pname, prep = prev_list[j]
-                cname, crep = curr_list[j]
-                gains.append({"name": cname, "gain": crep - prep, "joined": False, "left": False})
-            elif j < len(curr_list):
-                cname, crep = curr_list[j]
-                gains.append({"name": cname, "gain": None, "joined": True, "left": False})
+        for name, rep in curr["members"]:
+            if name in prev_map:
+                gain = rep - prev_map[name]
+                gains.append({"name": name, "gain": gain, "joined": False, "left": False})
             else:
-                pname, prep = prev_list[j]
-                gains.append({"name": pname, "gain": None, "joined": False, "left": True})
+                gains.append({"name": name, "gain": None, "joined": True, "left": False})
+        for name in prev_map:
+            if name not in curr_set:
+                gains.append({"name": name, "gain": None, "joined": False, "left": True})
         gains.sort(key=lambda x: (x["gain"] is None, -(x["gain"] or 0)))
         met_count = sum(1 for g in gains if g["gain"] is not None and g["gain"] >= threshold)
         total_current = len(curr["members"])
-        daily_pages.append({"date": date, "day_name": day_name, "threshold": threshold, "met": met_count, "total": total_current})
+        curr_season = curr.get("season") or prev.get("season") or ""
+        daily_pages.append({"date": date, "day_name": day_name, "threshold": threshold, "met": met_count, "total": total_current, "season": curr_season})
         rows_html = ""
+        if is_new_season:
+            rows_html += '<tr><td colspan="4" style="text-align:center;padding:14px;color:#e94560;font-weight:600;border-bottom:2px solid #e94560;">&#x26A1; New season started &mdash; reps reset</td></tr>\n'
         for idx, g in enumerate(gains, 1):
             star = ""
             if g["joined"]: star = '<span class="star-joined">&#9733;</span> '
@@ -1231,6 +1281,7 @@ def save_daily_history():
             rows_html += f'<tr class="{row_class}"><td>{idx}</td><td>{star}{g["name"]}</td><td>{gain_str}</td><td>{"✅" if g["gain"] is not None and g["gain"] >= threshold else "❌"}</td></tr>\n'
         prev_link = f'<a href="history_{prev["date"]}.html">&larr; Previous</a>' if i > 1 else '<span class="inactive">&larr; Previous</span>'
         next_link = f'<a href="history_{sheets_data[i+1]["date"]}.html">Next &rarr;</a>' if i < len(sheets_data) - 1 else '<span class="inactive">Next &rarr;</span>'
+        season_label = f"Season {curr_season} · " if curr_season else ""
         page_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1244,7 +1295,7 @@ def save_daily_history():
 </head>
 <body>
 <div class="container">
-  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · {date} ({day_name}) &middot; Min: <b>{threshold:,}</b></div></div>
+  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · {date} ({day_name}){(" · " + season_label) if season_label else ""}Min: <b>{threshold:,}</b></div></div>
   <div class="summary">{met_count} of {total_current} members met the threshold ({threshold:,})</div>
   <div class="nav">{prev_link}<a href="history.html">Index</a>{next_link}</div>
   <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Gain</th><th>Status</th></tr></thead><tbody>{rows_html}</tbody></table></div>
@@ -1255,9 +1306,24 @@ def save_daily_history():
         with open(f"history_{date}.html", "w", encoding="utf-8") as f:
             f.write(page_html)
         print(f"[{datetime.now(TARGET_TZ).strftime('%Y-%m-%d %H:%M:%S')}] Saved history_{date}.html")
-    index_rows = ""
+    from collections import OrderedDict
+    season_groups = OrderedDict()
     for dp in daily_pages:
-        index_rows += f'<a href="history_{dp["date"]}.html">{dp["date"]} ({dp["day_name"]}) <span class="met">{dp["met"]}/{dp["total"]}</span> met &rarr;</a>\n'
+        s = dp.get("season") or 0
+        if s not in season_groups:
+            season_groups[s] = []
+        season_groups[s].append(dp)
+    current_season = max(season_groups.keys()) if season_groups else None
+    index_rows = ""
+    for s_num, pages in season_groups.items():
+        is_current = (s_num == current_season)
+        current_badge = f' <span class="current-badge">[CURRENT]</span>' if is_current else ""
+        arrow = '<span class="arrow">&#9654;</span>'
+        index_rows += f'<details class="season-wrap"{" open" if is_current else ""}><summary>{arrow} SEASON {s_num}{current_badge}</summary>\n'
+        for dp in pages:
+            index_rows += f'<a href="history_{dp["date"]}.html">{dp["date"]} ({dp["day_name"]}) <span class="met">{dp["met"]}/{dp["total"]}</span> met &rarr;</a>\n'
+        index_rows += '</details>\n'
+    season_label = f"Season {current_season}" if current_season else "History"
     index_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1266,12 +1332,12 @@ def save_daily_history():
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Rep History · Season 61</title>
+<title>Daily Rep History · {season_label}</title>
 {css}
 </head>
 <body>
 <div class="container">
-  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Rep History (Season 61)</div></div>
+  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Rep History ({season_label})</div></div>
   <div class="index-list">{index_rows}</div>
   <div class="footer"><a href="index.html">&larr; Back to main page</a> &middot; <a href="https://github.com/nixervo/Clairvoyant-Reps">Source</a></div>
 </div>
