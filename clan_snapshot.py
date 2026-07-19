@@ -1254,6 +1254,29 @@ def save_daily_history():
         total_prev = sum(prev_map.values())
         total_curr = sum(rep for _, rep in curr["members"])
         is_new_season = total_prev > 0 and total_curr < total_prev * 0.05
+        if is_new_season:
+            old_season = prev.get("season") or 61
+            hist_url = f"https://playninjarift.com/api/detail_clan_history.php?clan_id={CLAN_ID}&season={old_season}&query_type=members"
+            try:
+                req = urllib.request.Request(hist_url, headers={"User-Agent": "clan-snapshot/1.0"})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    hist_data = json.loads(resp.read().decode())
+                fixed_members = [(m["character_name"], int(m["member_reputation"])) for m in hist_data["members"]]
+                curr["members"] = fixed_members
+                curr["season"] = old_season
+                curr_set = {name for name, _ in fixed_members}
+                total_curr = sum(rep for _, rep in fixed_members)
+                ws_curr = wb[curr["date"]]
+                for row_idx, (name, rep) in enumerate(fixed_members, 4):
+                    ws_curr.cell(row=row_idx, column=1, value=name)
+                    ws_curr.cell(row=row_idx, column=2, value=rep)
+                a1_val = ws_curr["A1"].value or ""
+                if "|" not in a1_val:
+                    ws_curr["A1"] = f"{a1_val} | S{old_season}"
+                print(f"  Fixed zeroed sheet {curr['date']} with season {old_season} history API ({len(fixed_members)} members)")
+                is_new_season = False
+            except Exception as e:
+                print(f"  History API fix failed for {curr['date']}: {e}")
         gains = []
         for name, rep in curr["members"]:
             if name in prev_map:
@@ -1348,6 +1371,11 @@ def save_daily_history():
     with open("history.html", "w", encoding="utf-8") as f:
         f.write(index_html)
     print(f"[{datetime.now(TARGET_TZ).strftime('%Y-%m-%d %H:%M:%S')}] Saved history.html")
+
+    try:
+        wb.save(EXCEL_FILE)
+    except Exception:
+        pass
 
 def run():
     print("Clan snapshot daemon started. Running every 30 minutes.")
