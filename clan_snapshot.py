@@ -1338,10 +1338,23 @@ def save_daily_history():
         if s not in season_groups:
             season_groups[s] = []
         season_groups[s].append(dp)
-    current_season = max(season_groups.keys()) if season_groups else None
+    live_season = None
+    try:
+        with open(SEASON_CACHE) as f:
+            live_season = json.load(f).get("season")
+    except:
+        pass
+    if not live_season:
+        try:
+            req = urllib.request.Request("https://playninjarift.com/api/refresh_time_website.php", headers={"User-Agent": "clan-snapshot/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                live_season = json.loads(resp.read().decode()).get("season")
+        except:
+            pass
+    current_season = live_season or (max(season_groups.keys()) if season_groups else None)
     index_rows = ""
     for s_num, pages in season_groups.items():
-        is_current = (s_num == current_season)
+        is_current = (live_season is not None and s_num == live_season)
         current_badge = f' <span class="current-badge">[CURRENT]</span>' if is_current else ""
         arrow = '<span class="arrow">&#9654;</span>'
         archive_path = f"S{s_num}_ID{CLAN_ID}.xlsx"
@@ -1361,7 +1374,7 @@ def save_daily_history():
         for dp in pages:
             index_rows += f'<a href="history_{dp["date"]}.html">{dp["date"]} ({dp["day_name"]}) <span class="met">{dp["met"]}/{dp["total"]}</span> met &rarr;</a>\n'
         index_rows += '</details>\n'
-    season_label = f"Season {current_season}" if current_season else "History"
+    season_label = f"Season {live_season}" if live_season else (f"Season {current_season}" if current_season else "History")
     index_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
