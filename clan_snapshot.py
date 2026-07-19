@@ -1058,6 +1058,13 @@ def save_snapshot(data):
 
     prev_data, prev_timestamp = load_prev_from_xlsx(EXCEL_FILE, sheet_name)
 
+    if prev_data:
+        prev_total = sum(m["member_reputation"] for m in prev_data)
+        curr_total = sum(m["member_reputation"] for m in data["members"])
+        if prev_total > 0 and curr_total < prev_total * 0.05:
+            prev_data = []
+            prev_timestamp = ""
+
     uniq = get_unique_names(data["members"])
 
     cache_1h = load_1h_cache()
