@@ -390,8 +390,11 @@ def save_html(data, prev_data, prev_timestamp, hourly_diffs, hourly_ts, now, all
     season_end_iso = ""
     if season_info:
         season_num = season_info["season"]
-        end_dt = datetime(2026, 7, 19, 5, 0, 0, tzinfo=timezone.utc)
-        season_end_iso = "2026-07-19T05:00:00Z"
+        server_tz = timezone(timedelta(hours=-5))
+        raw_end = season_info.get("season_end", "")
+        if raw_end:
+            end_dt = datetime.strptime(raw_end, "%Y-%m-%d %H:%M:%S").replace(tzinfo=server_tz).astimezone(timezone.utc)
+            season_end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
         timer_html = f"""
   <div class="timer-bar">
     <span class="timer-left">
@@ -1144,7 +1147,9 @@ def save_snapshot(data):
     goal_info = compute_goal_info(clan_reputation)
     stats = None
     if season_info:
-        end_dt = datetime(2026, 7, 19, 5, 0, 0, tzinfo=timezone.utc)
+        server_tz = timezone(timedelta(hours=-5))
+        raw_end = season_info.get("season_end", "")
+        end_dt = datetime.strptime(raw_end, "%Y-%m-%d %H:%M:%S").replace(tzinfo=server_tz).astimezone(timezone.utc) if raw_end else datetime(2026, 7, 19, 5, 0, 0, tzinfo=timezone.utc)
         avg_daily = compute_rolling_avg_daily_gain(EXCEL_FILE, sheet_name)
         proj = compute_season_projection(clan_reputation, avg_daily, end_dt, now)
         stats = {"today_gain": today_gain, "season_total": clan_reputation}
