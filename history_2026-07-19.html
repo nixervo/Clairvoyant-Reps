@@ -36,14 +36,22 @@
   .index-list .met { color: #4caf50; font-weight: 600; }
   .star-joined { color: #42a5f5; }
   .star-left { color: #f44336; }
+  details.season-wrap { margin: 0; }
+  details.season-wrap > summary { cursor: pointer; padding: 10px 14px; font-size: 15px; font-weight: 700; color: #e94560; background: #0f0f0f; border-bottom: 1px solid #14141f; user-select: none; list-style: none; display: flex; align-items: center; gap: 6px; }
+  details.season-wrap > summary::-webkit-details-marker { display: none; }
+  details.season-wrap > summary:hover { background: rgba(233,69,96,0.05); }
+  details.season-wrap > summary .arrow { font-size: 12px; color: #888; transition: transform .15s; }
+  details.season-wrap[open] > summary .arrow { transform: rotate(90deg); }
+  .current-badge { font-size: 11px; font-weight: 400; color: #666; background: #222; padding: 1px 8px; border-radius: 8px; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · 2026-07-19 (Sun) &middot; Min: <b>1,000</b></div></div>
+  <div class="header"><h1>Clairvoyant</h1><div class="sub">Daily Reps · 2026-07-19 (Sun) · Season 61 · Min: <b>1,000</b></div></div>
   <div class="summary">0 of 55 members met the threshold (1,000)</div>
   <div class="nav"><a href="history_2026-07-18.html">&larr; Previous</a><a href="history.html">Index</a><span class="inactive">Next &rarr;</span></div>
-  <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Gain</th><th>Status</th></tr></thead><tbody><tr class="red"><td>1</td><td>MY | Naruke</td><td>+0</td><td>❌</td></tr>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Name</th><th>Gain</th><th>Status</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;padding:14px;color:#e94560;font-weight:600;border-bottom:2px solid #e94560;">&#x26A1; New season started &mdash; reps reset</td></tr>
+<tr class="red"><td>1</td><td>MY | Naruke</td><td>+0</td><td>❌</td></tr>
 <tr class="red"><td>2</td><td>iZengotsou</td><td>+0</td><td>❌</td></tr>
 <tr class="red"><td>3</td><td>Ryugai</td><td>+0</td><td>❌</td></tr>
 <tr class="red"><td>4</td><td>§hitnobi</td><td>+0</td><td>❌</td></tr>
@@ -66,8 +74,8 @@
 <tr class="red"><td>21</td><td>CatDile</td><td>+-1,229</td><td>❌</td></tr>
 <tr class="red"><td>22</td><td>MY | iMuiz X</td><td>+-2,551</td><td>❌</td></tr>
 <tr class="red"><td>23</td><td>Player</td><td>+-2,682</td><td>❌</td></tr>
-<tr class="red"><td>24</td><td>warrior</td><td>+-2,802</td><td>❌</td></tr>
-<tr class="red"><td>25</td><td>Player</td><td>+-2,815</td><td>❌</td></tr>
+<tr class="red"><td>24</td><td>Player</td><td>+-2,682</td><td>❌</td></tr>
+<tr class="red"><td>25</td><td>warrior</td><td>+-2,802</td><td>❌</td></tr>
 <tr class="red"><td>26</td><td>MY | iMuiz</td><td>+-2,853</td><td>❌</td></tr>
 <tr class="red"><td>27</td><td>Jork</td><td>+-3,241</td><td>❌</td></tr>
 <tr class="red"><td>28</td><td>Ripley</td><td>+-5,160</td><td>❌</td></tr>

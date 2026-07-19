@@ -1202,6 +1202,8 @@ def save_daily_history():
                     season_num = int(meta[1:])
         except:
             pass
+        if season_num is None:
+            season_num = 61
         sheets_data.append({"date": s, "members": members, "season": season_num})
     css = """<style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
