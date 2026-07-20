@@ -49,9 +49,13 @@ import urllib.request
 from collections import OrderedDict
 
 # Fix PyAMF Python 2→3 compatibility (missing StringIO module)
+# Only needed when cpyamf C extension is unavailable (e.g. GitHub Actions Linux)
 import io
-sys.modules["StringIO"] = io
-sys.modules["cStringIO"] = io
+try:
+    import cpyamf  # noqa: F401
+except ImportError:
+    sys.modules["StringIO"] = io
+    sys.modules["cStringIO"] = io
 
 
 # ─── Configuration ───────────────────────────────────────────────────────────
