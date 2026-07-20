@@ -907,11 +907,17 @@ def _git_amend_push():
     subprocess.run(["git", "config", "user.name", "github-actions"], capture_output=True)
     subprocess.run(["git", "config", "user.email", "actions@github.com"], capture_output=True)
     subprocess.run(["git", "add", "castle_data.json"], capture_output=True)
-    # Only push if there's a change
     diff = subprocess.run(["git", "diff", "--staged", "HEAD"], capture_output=True)
-    if diff.stdout.strip():
-        subprocess.run(["git", "commit", "-m", "update castle data [daemon]"], capture_output=True)
-        subprocess.run(["git", "push", "origin", "main"], capture_output=True)  # no force needed with daemon
+    if not diff.stdout.strip():
+        return
+    subprocess.run(["git", "commit", "-m", "update castle data [daemon]"], capture_output=True)
+    # Push to whatever branch we're on
+    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                            capture_output=True, text=True).stdout.strip()
+    if branch:
+        subprocess.run(["git", "push", "origin", branch], capture_output=True)
+    else:
+        subprocess.run(["git", "push"], capture_output=True)
 
 
 def serve_daemon():
