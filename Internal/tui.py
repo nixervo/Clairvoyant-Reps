@@ -45,7 +45,10 @@ SESSION_TOKEN = None
 SESSION_USERNAME = None
 SESSION_CHAR_NAME = None
 
-SESSION_FILE = os.path.join(os.path.dirname(__file__), "session.json")
+if getattr(sys, "frozen", False):
+    SESSION_FILE = os.path.join(os.getcwd(), "session.json")
+else:
+    SESSION_FILE = os.path.join(os.path.dirname(__file__), "session.json")
 
 
 def session_context():
@@ -812,7 +815,7 @@ def view_search_clan():
         table.add_column("Name", style="cyan")
         table.add_column("Rep", justify="right", style="green")
         table.add_column("Level", justify="right")
-        for i, m in enumerate(members[:30], 1):
+        for i, m in enumerate(members, 1):
             table.add_row(
                 str(i),
                 m.get("character_name", "?")[:25],
@@ -891,10 +894,7 @@ def main_menu():
                 " [1] [cyan]Clan Ranking[/cyan]       [dim]All 2186 clans[/dim]",
                 " [2] [cyan]Crew Ranking[/cyan]       [dim]All crews by damage[/dim]",
                 " [3] [cyan]Castle Ownership[/cyan]   [dim]7 castles + owners[/dim]",
-                " [4] [cyan]Daily Data[/cyan]         [dim]Calendar, tasks, rewards[/dim]",
-                " [5] [cyan]Clan War[/cyan]           [dim]Battle-eligible clans[/dim]",
-                " [6] [cyan]Skills[/cyan]             [dim]7 element trees[/dim]",
-                " [7] [cyan]Search Clan[/cyan]        [dim]Lookup clan by ID[/dim]",
+                " [4] [cyan]Search Clan[/cyan]        [dim]Lookup clan by ID[/dim]",
                 "",
                 f" {escape('[a]')} [dim]Toggle auto-refresh[/dim]",
                 f" {escape('[q]')} [red]Quit[/red]",
@@ -914,12 +914,6 @@ def main_menu():
         elif key == "3":
             view_castles()
         elif key == "4":
-            view_daily()
-        elif key == "5":
-            view_clan_war()
-        elif key == "6":
-            view_skills()
-        elif key == "7":
             view_search_clan()
         elif key == "q" or key == "\x1b":
             console.clear()
