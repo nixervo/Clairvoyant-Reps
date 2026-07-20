@@ -982,6 +982,9 @@ def serve_daemon():
             print(f"[daemon] Loop #{count}: pushed {len(castles)} castles")
         except Exception as e:
             print(f"[daemon] Loop #{count} error: {e}")
+
+
+def main():
     if len(sys.argv) < 2:
         print(__doc__)
         print("\nQuick start:")
