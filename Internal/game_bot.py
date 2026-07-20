@@ -48,6 +48,11 @@ import json
 import urllib.request
 from collections import OrderedDict
 
+# Fix PyAMF Python 2→3 compatibility (missing StringIO module)
+import io
+sys.modules["StringIO"] = io
+sys.modules["cStringIO"] = io
+
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 AMF_URL = "https://ninjarift.org/amf_nl/"
