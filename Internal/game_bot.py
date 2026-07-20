@@ -988,7 +988,7 @@ def export_castles_json():
         print("ERROR: Set NR_USERNAME and NR_PASSWORD environment variables")
         sys.exit(1)
 
-    print(f"[*] Logging in as {username}...")
+    print("[*] Logging in...")
     session = login_user(username, password)
     if session is None:
         print("ERROR: Login failed — check credentials")
@@ -1093,7 +1093,7 @@ def serve_daemon():
         print("ERROR: Set NR_USERNAME and NR_PASSWORD environment variables")
         sys.exit(1)
 
-    print(f"[daemon] Logging in as {username}...")
+    print("[daemon] Logging in...")
     session = login_user(username, password)
     if session is None:
         print("[daemon] ERROR: Login failed — check credentials")
