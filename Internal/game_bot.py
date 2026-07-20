@@ -435,8 +435,8 @@ CASTLE_NAMES = [
 # char_id=591659 (clancy2807). Token changes per login session.
 # No authentication required — these are just context identifiers.
 
-DEFAULT_CHAR_ID = 532542
-DEFAULT_TOKEN = "edbee744f71425e8ff231cb2c186a16a"
+DEFAULT_CHAR_ID = 0      # set via TUI login or env var
+DEFAULT_TOKEN = ""        # set via TUI login or env var
 
 
 # ─── High-Level API Calls ────────────────────────────────────────────────────
