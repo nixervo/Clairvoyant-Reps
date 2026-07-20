@@ -830,7 +830,7 @@ def _print_payload(obj, indent="", depth=0):
 
 def export_castles_json():
     """
-    Login via env vars, fetch castle data, write castle_data.json.
+    Login via env vars, fetch castle data once, write castle_data.json.
     For GitHub Actions — reads NR_USERNAME / NR_PASSWORD from environment.
     """
     import os
@@ -851,26 +851,32 @@ def export_castles_json():
         sys.exit(1)
 
     print(f"[*] Fetching castle data (acc_id={session['acc_id']})...")
-    # Get character list — castles API needs char_id, not acc_id
     chars = get_characters(session["acc_id"], session["sessionkey"])
     if not chars:
         print("ERROR: No characters found on this account")
         sys.exit(1)
-    char_id = chars[0][0]  # first character's ID
+    char_id = chars[0][0]
     token = session["sessionkey"]
     print(f"[*] Using char_id={char_id} ({chars[0][1]})")
 
-    # Get owners
-    raw = get_castles_info(char_id, token)
+    castles = _fetch_castles(char_id, token)
+    with open("castle_data.json", "w") as f:
+        json.dump(castles, f, indent=2)
+    print(f"[*] Wrote castle_data.json ({len(castles)} castles)")
+
+
+def _fetch_castles(char_id, token):
+    """Fetch all castle data via AMF. Returns list of 7 dicts."""
     from pyamf import remoting
     import io
+
+    raw = get_castles_info(char_id, token)
     pos = raw.find(b"\x00\x03")
     if pos >= 0:
         raw = raw[pos:]
     msg = remoting.decode(io.BytesIO(raw))
     owners = list(msg)[0][1].body.get("castle_owners", [])
 
-    # Get individual castle details
     castles = []
     for i in range(7):
         try:
@@ -892,13 +898,73 @@ def export_castles_json():
                 "owner": owners[i] if i < len(owners) else "?",
                 "wall_hp": 0, "defender_hp": 0,
             })
+    return castles
 
+
+def _git_amend_push():
+    """Commit castle_data.json with --amend and force-push."""
+    import subprocess
+    subprocess.run(["git", "config", "user.name", "github-actions"], capture_output=True)
+    subprocess.run(["git", "config", "user.email", "actions@github.com"], capture_output=True)
+    subprocess.run(["git", "add", "castle_data.json"], capture_output=True)
+    # Only push if there's a change
+    diff = subprocess.run(["git", "diff", "--staged", "HEAD"], capture_output=True)
+    if diff.stdout.strip():
+        subprocess.run(["git", "commit", "-m", "update castle data [daemon]"], capture_output=True)
+        subprocess.run(["git", "push", "origin", "main"], capture_output=True)  # no force needed with daemon
+
+
+def serve_daemon():
+    """
+    Run indefinitely: fetch castle data every 30s and push to git.
+    For GitHub Actions daemon mode — cron restarts every 6h.
+    Reads NR_USERNAME / NR_PASSWORD from environment.
+    """
+    import os, subprocess, time as _time
+
+    username = os.environ.get("NR_USERNAME")
+    password = os.environ.get("NR_PASSWORD")
+    if not username or not password:
+        print("ERROR: Set NR_USERNAME and NR_PASSWORD environment variables")
+        sys.exit(1)
+
+    print(f"[daemon] Logging in as {username}...")
+    session = login_user(username, password)
+    if session is None:
+        print("[daemon] ERROR: Login failed — check credentials")
+        sys.exit(1)
+    if session.get("needs_verification"):
+        print(f"[daemon] ERROR: Account '{username}' is not verified.")
+        sys.exit(1)
+
+    chars = get_characters(session["acc_id"], session["sessionkey"])
+    if not chars:
+        print("[daemon] ERROR: No characters found")
+        sys.exit(1)
+    char_id = chars[0][0]
+    token = session["sessionkey"]
+    print(f"[daemon] Using char_id={char_id} ({chars[0][1]})")
+
+    # Write initial data
+    castles = _fetch_castles(char_id, token)
     with open("castle_data.json", "w") as f:
         json.dump(castles, f, indent=2)
-    print(f"[*] Wrote castle_data.json ({len(castles)} castles)")
+    _git_amend_push()
+    print(f"[daemon] Initial data written ({len(castles)} castles)")
 
-
-def main():
+    # Main loop
+    count = 0
+    while True:
+        _time.sleep(30)
+        count += 1
+        try:
+            castles = _fetch_castles(char_id, token)
+            with open("castle_data.json", "w") as f:
+                json.dump(castles, f, indent=2)
+            _git_amend_push()
+            print(f"[daemon] Loop #{count}: pushed {len(castles)} castles")
+        except Exception as e:
+            print(f"[daemon] Loop #{count} error: {e}")
     if len(sys.argv) < 2:
         print(__doc__)
         print("\nQuick start:")
@@ -951,6 +1017,9 @@ def main():
         raw = get_skills()
     elif cmd == "--export-castles":
         export_castles_json()
+        return
+    elif cmd == "--serve-daemon":
+        serve_daemon()
         return
     else:
         print(f"Unknown command: {cmd}")
