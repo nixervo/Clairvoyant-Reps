@@ -574,10 +574,10 @@ def _extract_characters_from_raw(raw):
     import re
     s = raw.decode("ascii", errors="replace")
 
-    # Find all character_name strings between field markers
-    names = re.findall(r"character_name.{0,30}([A-Za-z\u00c0-\u00ff][A-Za-z0-9\u00c0-\u00ff _\-.!+\(\)]{1,50})", s)
-    ids = re.findall(r"char_id.{0,20}(\d{4,7})", s)
-    levels = re.findall(r"character_level.{0,10}(\d+)", s)
+    # . doesn't match binary bytes, use [\s\S] instead
+    names = re.findall(r"character_name[\s\S]{0,30}([\x20-\x7E]{2,50})", s)
+    ids = re.findall(r"char_id[\s\S]{0,20}(\d{4,7})", s)
+    levels = re.findall(r"character_level[\s\S]{0,10}(\d+)", s)
     results = []
     for i, name in enumerate(names):
         cid = int(ids[i]) if i < len(ids) else 0
