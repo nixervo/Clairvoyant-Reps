@@ -571,18 +571,97 @@ def _decode_amf_response_raw(raw):
 
 def _extract_characters_from_raw(raw):
     """Extract character list from raw getAllCharacters AMF response bytes."""
-    import re
-    s = raw.decode("ascii", errors="replace")
-
-    # . doesn't match binary bytes, use [\s\S] instead
-    names = re.findall(r"character_name[\s\S]{0,30}([\x20-\x7E]{2,50})", s)
-    ids = re.findall(r"char_id[\s\S]{0,20}(\d{4,7})", s)
-    levels = re.findall(r"character_level[\s\S]{0,10}(\d+)", s)
     results = []
-    for i, name in enumerate(names):
-        cid = int(ids[i]) if i < len(ids) else 0
-        lvl = int(levels[i]) if i < len(levels) else 0
-        results.append((cid, name.strip(), lvl))
+
+    def read_u29(data, pos):
+        val = data[pos]
+        if val < 128:
+            return val, pos + 1
+        result = val & 0x7F
+        pos += 1
+        val = data[pos]
+        result = (result << 7) | (val & 0x7F)
+        if val < 128:
+            return result, pos + 1
+        pos += 1
+        val = data[pos]
+        result = (result << 7) | (val & 0x7F)
+        if val < 128:
+            return result, pos + 1
+        pos += 1
+        val = data[pos]
+        return (result << 8) | val, pos + 1
+
+    def read_amf3_string(data, pos):
+        """Read AMF3 string at pos. Returns (str, new_pos) or (None, pos)."""
+        if pos >= len(data) or data[pos] != 0x06:
+            return None, pos
+        pos += 1
+        ref, pos = read_u29(data, pos)
+        if ref & 1:  # reference, skip
+            return None, pos
+        length = ref >> 1
+        if pos + length > len(data):
+            return None, pos
+        try:
+            s = data[pos:pos + length].decode("utf-8", errors="replace")
+        except:
+            s = ""
+        return s, pos + length
+
+    # Scan for char_id fields with their integer values
+    char_ids = []
+    pos = 0
+    while pos < len(raw):
+        idx = raw.find(b"char_id", pos)
+        if idx < 0:
+            break
+        # After "char_id" look for 0x04 (AMF3 integer marker) within 15 bytes
+        after = raw[idx + 7:idx + 7 + 15]
+        int_pos = after.find(b"\x04")
+        if int_pos >= 0:
+            val, _ = read_u29(raw, idx + 7 + int_pos + 1)
+            char_ids.append(val)
+        pos = idx + 1
+
+    # Scan for character_name fields
+    char_names = []
+    pos = 0
+    while pos < len(raw):
+        idx = raw.find(b"character_name", pos)
+        if idx < 0:
+            break
+        after = idx + len(b"character_name")
+        # Look for 0x06 (AMF3 string) within 20 bytes after field name
+        for offset in range(20):
+            if after + offset < len(raw) and raw[after + offset] == 0x06:
+                s, _ = read_amf3_string(raw, after + offset)
+                if s:
+                    char_names.append(s)
+                break
+        pos = idx + 1
+
+    # Scan for character_level fields
+    char_levels = []
+    pos = 0
+    while pos < len(raw):
+        idx = raw.find(b"character_level", pos)
+        if idx < 0:
+            break
+        after = raw[idx + len(b"character_level"):idx + len(b"character_level") + 15]
+        int_pos = after.find(b"\x04")
+        if int_pos >= 0:
+            val, _ = read_u29(raw, idx + len(b"character_level") + int_pos + 1)
+            char_levels.append(val)
+        pos = idx + 1
+
+    # Merge into results — match by index
+    max_len = max(len(char_ids), len(char_names))
+    for i in range(max_len):
+        cid = char_ids[i] if i < len(char_ids) else 0
+        name = char_names[i] if i < len(char_names) else "?"
+        lvl = char_levels[i] if i < len(char_levels) else 0
+        results.append((cid, name, lvl))
     return results
 
 
