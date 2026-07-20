@@ -532,6 +532,43 @@ def get_skills(char_id=DEFAULT_CHAR_ID, token=DEFAULT_TOKEN):
 
 # -- Authentication -------------------------------------------------------------
 
+def _decode_amf_response_raw(raw):
+    """
+    Extract fields from raw AMF response bytes without pyamf.
+    Used as a fallback when pyamf's pure-Python decoder is broken (Linux).
+    """
+    import re
+    result = {}
+    s = raw.decode("ascii", errors="replace")
+
+    # Find sessionkey: 32-char lowercase hex string (skip the length byte area)
+    m = re.search(r"sessionkey.{0,15}([a-f0-9]{32})", s, re.IGNORECASE)
+    if m:
+        result["sessionkey"] = m.group(1).lower()
+
+    # Find uid: an integer near the "uid" field marker
+    # AMF encodes integers with 0x04 prefix, but we try regex on the ASCII dump
+    m = re.search(r"uid.{0,20}(\d{4,7})", s)
+    if m:
+        result["uid"] = int(m.group(1))
+
+    # status and verified are booleans — if present in the body, they're true
+    if "status" in s:
+        result["status"] = 1
+    if "verified" in s:
+        result["verified"] = 1
+
+    # Season fields
+    m = re.search(r"clan_season.{0,10}(\d+)", s)
+    if m:
+        result["clan_season"] = int(m.group(1))
+    m = re.search(r"crew_season.{0,10}(\d+)", s)
+    if m:
+        result["crew_season"] = int(m.group(1))
+
+    return result
+
+
 def _decode_amf_response(raw):
     """Decode AMF response, handling various envelope formats."""
     from pyamf import remoting, decode as amf_decode
@@ -559,7 +596,8 @@ def _decode_amf_response(raw):
         except Exception:
             pass
 
-    return {}
+    # Last resort: extract fields directly from raw bytes (works when pyamf is broken)
+    return _decode_amf_response_raw(raw)
 
 
 # -- Authentication -------------------------------------------------------------
