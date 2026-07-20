@@ -910,14 +910,13 @@ def _git_amend_push():
     diff = subprocess.run(["git", "diff", "--staged", "HEAD"], capture_output=True)
     if not diff.stdout.strip():
         return
-    subprocess.run(["git", "commit", "-m", "update castle data [daemon]"], capture_output=True)
-    # Push to whatever branch we're on
+    subprocess.run(["git", "commit", "--amend", "-m", "update castle data [daemon]"], capture_output=True)
     branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
                             capture_output=True, text=True).stdout.strip()
     if branch:
-        subprocess.run(["git", "push", "origin", branch], capture_output=True)
+        subprocess.run(["git", "push", "origin", branch, "--force"], capture_output=True)
     else:
-        subprocess.run(["git", "push"], capture_output=True)
+        subprocess.run(["git", "push", "--force"], capture_output=True)
 
 
 def serve_daemon():
