@@ -569,6 +569,23 @@ def _decode_amf_response_raw(raw):
     return result
 
 
+def _extract_characters_from_raw(raw):
+    """Extract character list from raw getAllCharacters AMF response bytes."""
+    import re
+    s = raw.decode("ascii", errors="replace")
+
+    # Find all character_name strings between field markers
+    names = re.findall(r"character_name.{0,30}([A-Za-z\u00c0-\u00ff][A-Za-z0-9\u00c0-\u00ff _\-.!+\(\)]{1,50})", s)
+    ids = re.findall(r"char_id.{0,20}(\d{4,7})", s)
+    levels = re.findall(r"character_level.{0,10}(\d+)", s)
+    results = []
+    for i, name in enumerate(names):
+        cid = int(ids[i]) if i < len(ids) else 0
+        lvl = int(levels[i]) if i < len(levels) else 0
+        results.append((cid, name.strip(), lvl))
+    return results
+
+
 def _decode_amf_response(raw):
     """Decode AMF response, handling various envelope formats."""
     from pyamf import remoting, decode as amf_decode
@@ -691,6 +708,11 @@ def get_characters(acc_id, sessionkey):
                     char.get("character_level", 0),
                 ))
         return result
+
+    # Fallback: extract from raw bytes when pyamf decode fails (Linux)
+    chars = _extract_characters_from_raw(raw)
+    if chars:
+        return chars
     return []
 
 
