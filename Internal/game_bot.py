@@ -903,20 +903,32 @@ def _fetch_castles(char_id, token):
 
 def _git_amend_push():
     """Commit castle_data.json with --amend and force-push."""
-    import subprocess
-    subprocess.run(["git", "config", "user.name", "github-actions"], capture_output=True)
-    subprocess.run(["git", "config", "user.email", "actions@github.com"], capture_output=True)
-    subprocess.run(["git", "add", "castle_data.json"], capture_output=True)
-    diff = subprocess.run(["git", "diff", "--staged", "HEAD"], capture_output=True)
+    import subprocess, os
+
+    def _run(cmd, check=False):
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"[git] {' '.join(cmd)} -> rc={r.returncode}")
+            if r.stderr.strip():
+                print(f"[git] stderr: {r.stderr.strip()}")
+            if check:
+                raise RuntimeError(f"git command failed: {' '.join(cmd)}")
+        return r
+
+    _run(["git", "config", "user.name", "github-actions"])
+    _run(["git", "config", "user.email", "actions@github.com"])
+    _run(["git", "add", "castle_data.json"])
+    diff = _run(["git", "diff", "--staged", "HEAD"])
     if not diff.stdout.strip():
-        return
-    subprocess.run(["git", "commit", "--amend", "-m", "update castle data [daemon]"], capture_output=True)
-    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                            capture_output=True, text=True).stdout.strip()
+        return  # no changes
+
+    _run(["git", "commit", "--amend", "--reset-author", "-m", "update castle data [daemon]"], check=True)
+
+    branch = os.environ.get("GIT_BRANCH", "")
     if branch:
-        subprocess.run(["git", "push", "origin", branch, "--force"], capture_output=True)
+        _run(["git", "push", "origin", f"HEAD:{branch}", "--force"], check=True)
     else:
-        subprocess.run(["git", "push", "--force"], capture_output=True)
+        _run(["git", "push", "origin", "HEAD", "--force"], check=True)
 
 
 def serve_daemon():
