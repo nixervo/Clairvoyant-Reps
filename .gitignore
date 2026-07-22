@@ -2,3 +2,4 @@ __pycache__/
 Internal/session.json
 Internal/dist/
 *.saz
+.wrangler/

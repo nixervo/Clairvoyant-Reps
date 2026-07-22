@@ -138,6 +138,24 @@ def compute_rolling_avg_daily_gain(filename, before_date):
         return None
     wb = load_workbook(filename)
     names = sorted([s.title for s in wb.worksheets if s.title != "Sheet1" and s.title < before_date])
+    if not names:
+        return None
+
+    # Try reading Day Points from D2 (new storage)
+    day_points = []
+    for name in names:
+        ws = wb[name]
+        val = ws["D2"].value
+        if val is not None:
+            try:
+                day_points.append(int(float(val)))
+            except (ValueError, TypeError):
+                continue
+
+    if len(day_points) >= 2:
+        return sum(day_points) / len(day_points)
+
+    # Fallback: old reputation-diff method (for sheets without Day Points)
     gains = []
     for i in range(1, len(names)):
         prev_total = 0
@@ -176,7 +194,7 @@ def compute_diff(members, prev_data):
         result.append((name, reps, diff_str))
     return result
 
-def write_sheet(ws, data, prev_data, now, unique_names, season_num=None):
+def write_sheet(ws, data, prev_data, now, unique_names, season_num=None, today_gain=None):
     uniq = unique_names if unique_names else get_unique_names(data["members"])
     rows = compute_diff(data["members"], prev_data)
     daily_lookup = {name: diff for name, _, diff in rows}
@@ -211,12 +229,20 @@ def write_sheet(ws, data, prev_data, now, unique_names, season_num=None):
         cell.font = Font(bold=True)
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
+    if today_gain is not None:
+        ws["D1"] = "Day Points"
+        ws["D1"].font = Font(bold=True, size=11)
+        ws["D1"].alignment = Alignment(horizontal="center", vertical="center")
+        ws["D2"] = int(today_gain)
+        ws["D2"].alignment = Alignment(horizontal="center", vertical="center")
+        ws.column_dimensions["D"].width = 14
+
     for row_idx, (name, reps_val, diff_val) in enumerate(rows, 4):
         ws.cell(row=row_idx, column=1, value=name).alignment = Alignment(vertical="center")
         ws.cell(row=row_idx, column=2, value=reps_val).alignment = Alignment(horizontal="center", vertical="center")
         ws.cell(row=row_idx, column=3, value=diff_val).alignment = Alignment(horizontal="center", vertical="center")
 
-def save_xlsx(data, prev_data, now, uniq, season_info=None):
+def save_xlsx(data, prev_data, now, uniq, season_info=None, today_gain=None):
     sheet_name = now.strftime("%Y-%m-%d")
 
     if os.path.exists(EXCEL_FILE):
@@ -229,7 +255,7 @@ def save_xlsx(data, prev_data, now, uniq, season_info=None):
 
     ws = wb.create_sheet(title=sheet_name)
     season_num = season_info.get("season") if season_info else None
-    write_sheet(ws, data, prev_data, now, uniq, season_num)
+    write_sheet(ws, data, prev_data, now, uniq, season_num, today_gain)
 
     if "Sheet" in wb.sheetnames and len(wb.sheetnames) > 1:
         del wb["Sheet"]
@@ -1174,7 +1200,7 @@ def save_snapshot(data):
     is_hourly_mark = (now.minute <= 1)
 
     if is_daily:
-        save_xlsx(data, prev_data, now, uniq, season_info)
+        save_xlsx(data, prev_data, now, uniq, season_info, today_gain)
         existing_html = [f.replace(".html", "") for f in os.listdir(".") if f.endswith(".html") and f[:4].isdigit() and f != "index.html"]
         all_dates = set(existing_html)
         all_dates.add(sheet_name)
