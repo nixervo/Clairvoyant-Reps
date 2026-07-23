@@ -152,7 +152,7 @@ def compute_rolling_avg_daily_gain(filename, before_date):
             except (ValueError, TypeError):
                 continue
 
-    if len(day_points) >= 2:
+    if len(day_points) >= 1:
         return sum(day_points) / len(day_points)
 
     # Fallback: old reputation-diff method (for sheets without Day Points)
