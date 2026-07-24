@@ -22,7 +22,7 @@
   .container {
     max-width: 960px;
     width: 100%;
-    box-shadow: 0 0 40px rgba(233, 69, 96, 0.06), 0 8px 32px rgba(0,0,0,0.5);
+    box-shadow: 0 0 40px rgba(153, 153, 153, 0.06), 0 8px 32px rgba(0,0,0,0.5);
     border-radius: 16px;
     overflow: hidden;
   }
@@ -37,7 +37,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #e94560, #ff6b8a, #e94560);
+    background: linear-gradient(90deg, #999999, #FFFFFF, #999999);
     background-size: 200% 100%;
     animation: shimmer 3s ease-in-out infinite;
   }
@@ -46,7 +46,7 @@
     width: 132px; height: 132px;
     object-fit: contain;
     margin-bottom: 16px;
-    filter: drop-shadow(0 0 16px rgba(233, 69, 96, 0.3));
+    filter: drop-shadow(0 0 16px rgba(153, 153, 153, 0.3));
   }
   .header h1 {
     font-size: 30px;
@@ -82,8 +82,8 @@
     border: 1px solid #1a1a2e;
     transition: 0.25s;
   }
-  .archive a:hover { border-color: #e94560; color: #fff; background: rgba(233, 69, 96, 0.08); }
-  .archive a.active { border-color: #e94560; color: #fff; background: #e94560; font-weight: 600; }
+  .archive a:hover { border-color: #999999; color: #fff; background: rgba(153, 153, 153, 0.08); }
+  .archive a.active { border-color: #999999; color: #fff; background: #999999; font-weight: 600; }
   .table-wrap { overflow-x: auto; }
   table {
     width: 100%;
@@ -99,7 +99,7 @@
     font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #e94560;
+    color: #999999;
     font-weight: 600;
   }
   td {
@@ -110,7 +110,7 @@
     text-align: center;
   }
   tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
-  tr:hover td { background: rgba(233, 69, 96, 0.04); }
+  tr:hover td { background: rgba(153, 153, 153, 0.04); }
   td.num { font-variant-numeric: tabular-nums; }
   .up { color: #4caf50; }
   .down { color: #f44336; }
@@ -122,7 +122,7 @@
   }
   .changes-title {
     font-size: 13px;
-    color: #e94560;
+    color: #999999;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -170,7 +170,7 @@
     border-top: 1px solid #12121e;
   }
   .footer .ref { color: #555; font-size: 11px; margin-top: 2px; }
-  .footer a { color: #e94560; text-decoration: none; }
+  .footer a { color: #999999; text-decoration: none; }
   .timer-bar {
     display: flex;
     align-items: center;
@@ -193,7 +193,7 @@
   .timer-digits span:first-child { color: #2dd4bf; font-weight: 600; min-width: 28px; display: inline-block; text-align: center; }
   .timer-unit { color: #888; font-size: 12px; margin-left: 1px; }
   .timer-right { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 12px; color: #888; user-select: none; white-space: nowrap; }
-  .timer-right:hover { color: #e94560; }
+  .timer-right:hover { color: #999999; }
   .stats-bar {
     display: flex;
     flex-direction: column;
@@ -263,7 +263,7 @@
     font-size: 13px;
     outline: none;
   }
-  #search-input:focus { border-color: #e94560; }
+  #search-input:focus { border-color: #999999; }
   #search-input::placeholder { color: #555; }
   .live-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; white-space: nowrap; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -272,7 +272,7 @@
   .status-dot.wait { background: #888; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   tr.new-row td { animation: fadeIn 0.5s ease; }
-  @keyframes fadeIn { from { opacity: 0; background: rgba(233,69,96,0.1); } to { opacity: 1; background: transparent; } }
+  @keyframes fadeIn { from { opacity: 0; background: rgba(153,153,153,0.1); } to { opacity: 1; background: transparent; } }
   tr.left-row td { opacity: 0.35; }
   .goal-bar {
     display: flex;
@@ -291,7 +291,7 @@
   }
   .goal-fill {
     height: 100%;
-    background: linear-gradient(90deg, #e94560, #ff6b8a);
+    background: linear-gradient(90deg, #999999, #FFFFFF);
     border-radius: 8px;
     transition: width 0.5s ease;
   }
@@ -301,16 +301,16 @@
     font-size: 12px;
     color: #888;
   }
-  .goal-info .goal-next { color: #e94560; font-weight: 600; }
+  .goal-info .goal-next { color: #999999; font-weight: 600; }
   .goal-info .goal-num { color: #ccc; font-variant-numeric: tabular-nums; }
   td:first-child, th:first-child { width: 28px; min-width: 28px; text-align: center; color: #666; font-size: 12px; }
   .action-btn { cursor: pointer; font-size: 12px; color: #888; padding: 4px 10px; border-radius: 4px; border: 1px solid #1a1a2e; background: #0f0f1e; user-select: none; white-space: nowrap; }
-  .action-btn:hover { border-color: #e94560; color: #e94560; }
+  .action-btn:hover { border-color: #999999; color: #999999; }
   .footer-updated { color: #555; font-size: 11px; margin: 2px 0; }
   .footer-csv { margin-top: 8px; }
-  .footer-csv a { color: #e94560; text-decoration: none; font-size: 12px; cursor: pointer; }
+  .footer-csv a { color: #999999; text-decoration: none; font-size: 12px; cursor: pointer; }
   .footer-csv a:hover { text-decoration: underline; }
-  .copied-toast { position: absolute; background: #e94560; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 10; }
+  .copied-toast { position: absolute; background: #999999; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 10; }
 </style>
 </head>
 <body>
@@ -343,28 +343,28 @@
     <div class="stats-row">
       <div class="stats-col">
         <span class="stat-label">Today</span>
-        <span class="stat-val" id="today-gain">+19,995</span>
+        <span class="stat-val" id="today-gain">+24,320</span>
       </div>
       <div class="stats-col">
         <span class="stat-label">Season Total</span>
-        <span class="stat-val" id="season-total">179,625</span>
+        <span class="stat-val" id="season-total">183,950</span>
       </div>
       <div class="stats-col">
         <span class="stat-label">Est. Season Total</span>
-        <span class="stat-val" id="est-season">809,623</span>
+        <span class="stat-val" id="est-season">813,948</span>
       </div>
       <div class="stats-col">
-        <span class="stat-label" id="avg-label">Avg/Day &middot; 16d left</span>
+        <span class="stat-label" id="avg-label">Avg/Day &middot; 15d left</span>
         <span class="stat-val" id="avg-daily">30,000</span>
       </div>
     </div>
   </div>
   
   <div class="goal-bar">
-    <div class="goal-track"><div class="goal-fill" style="width:19.9%"></div></div>
+    <div class="goal-track"><div class="goal-fill" style="width:21.0%"></div></div>
     <div class="goal-info">
-      <span>Next: <span class="goal-next">20 Stamina Rolls</span> &middot; 19.9%</span>
-      <span class="goal-num">179,625 / 500,000</span>
+      <span>Next: <span class="goal-next">20 Stamina Rolls</span> &middot; 21.0%</span>
+      <span class="goal-num">183,950 / 500,000</span>
     </div>
   </div>
   <div class="live-bar">
@@ -380,152 +380,139 @@
   <div class="table-wrap">
   <table>
     <thead><tr><th># <span class="sort-arrow"></span></th><th>Name <span class="sort-arrow"></span></th><th>Total Reps <span class="sort-arrow"></span></th><th>1/2 Hour <span class="sort-arrow"></span></th><th>Hourly <span class="sort-arrow"></span></th><th>Daily <span class="sort-arrow"></span></th></tr></thead>
-    <tbody><tr><td class="num">1</td><td>OROCHIMARU</td><td class="num">0</td><td class="num"><span class="down">0</span></td><td class="num"><span class="down">0</span></td><td class="num"><span class="down">0</span></td></tr><tr><td class="num">2</td><td>Mahsuri</td><td class="num">11385</td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+100</span></td><td class="num"><span class="up">+1790</span></td></tr><tr><td class="num">3</td><td>Parameswara</td><td class="num">10155</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+70</span></td><td class="num"><span class="up">+1470</span></td></tr><tr><td class="num">4</td><td>Hang Tuah</td><td class="num">8608</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1070</span></td></tr><tr><td class="num">5</td><td>Mahawangsa</td><td class="num">7915</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1050</span></td></tr><tr><td class="num">6</td><td>Tun Teja</td><td class="num">8120</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1042</span></td></tr><tr><td class="num">7</td><td>Elavoth</td><td class="num">11118</td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+100</span></td><td class="num"><span class="up">+1820</span></td></tr><tr><td class="num">8</td><td>Dracoth</td><td class="num">10055</td><td class="num"><span class="up">+40</span></td><td class="num"><span class="up">+90</span></td><td class="num"><span class="up">+1625</span></td></tr><tr><td class="num">9</td><td>Summoth</td><td class="num">9048</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1185</span></td></tr><tr><td class="num">10</td><td>Maximoth</td><td class="num">8055</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1050</span></td></tr><tr><td class="num">11</td><td>Shadow</td><td class="num">11096</td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+100</span></td><td class="num"><span class="up">+1795</span></td></tr><tr><td class="num">12</td><td>Assassin</td><td class="num">10037</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+75</span></td><td class="num"><span class="up">+1510</span></td></tr><tr><td class="num">13</td><td>Zenith</td><td class="num">8775</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1075</span></td></tr><tr><td class="num">14</td><td>Astraphel</td><td class="num">8375</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1050</span></td></tr><tr><td class="num">15</td><td>Noir</td><td class="num">8084</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1038</span></td></tr><tr><td class="num">16</td><td>Deucedrag</td><td class="num">0</td><td class="num"><span class="down">0</span></td><td class="num"><span class="down">0</span></td><td class="num"><span class="down">0</span></td></tr><tr><td class="num">17</td><td>Heracoth</td><td class="num">7799</td><td class="num"><span class="up">+25</span></td><td class="num"><span class="up">+50</span></td><td class="num"><span class="up">+1050</span></td></tr><tr><td class="num">18</td><td>Hika 2</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">19</td><td>Hika 3</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">20</td><td>Hika 4</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">21</td><td>Hika 5</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">22</td><td>Hika 6</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr></tbody>
+    <tbody><tr><td class="num">1</td><td>OROCHIMARU</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="down">0</span></td></tr><tr><td class="num">2</td><td>Mahsuri</td><td class="num">11660</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+2065</span></td></tr><tr><td class="num">3</td><td>Parameswara</td><td class="num">10390</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1705</span></td></tr><tr><td class="num">4</td><td>Hang Tuah</td><td class="num">8763</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1225</span></td></tr><tr><td class="num">5</td><td>Mahawangsa</td><td class="num">8065</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1200</span></td></tr><tr><td class="num">6</td><td>Tun Teja</td><td class="num">8270</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1192</span></td></tr><tr><td class="num">7</td><td>Elavoth</td><td class="num">11403</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+2105</span></td></tr><tr><td class="num">8</td><td>Dracoth</td><td class="num">10305</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1875</span></td></tr><tr><td class="num">9</td><td>Summoth</td><td class="num">9263</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1400</span></td></tr><tr><td class="num">10</td><td>Maximoth</td><td class="num">8205</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1200</span></td></tr><tr><td class="num">11</td><td>Shadow</td><td class="num">11371</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+2070</span></td></tr><tr><td class="num">12</td><td>Assassin</td><td class="num">10277</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1750</span></td></tr><tr><td class="num">13</td><td>Zenith</td><td class="num">8940</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1240</span></td></tr><tr><td class="num">14</td><td>Astraphel</td><td class="num">8525</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1200</span></td></tr><tr><td class="num">15</td><td>Noir</td><td class="num">8234</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1188</span></td></tr><tr><td class="num">16</td><td>Deucedrag</td><td class="num">0</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="down">0</span></td></tr><tr><td class="num">17</td><td>Heracoth</td><td class="num">7949</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="up">+1200</span></td></tr><tr><td class="num">18</td><td>Hika 2</td><td class="num">375</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">19</td><td>Hika 3</td><td class="num">370</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">20</td><td>Hika 4</td><td class="num">245</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">21</td><td>Hika 5</td><td class="num">175</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr><tr><td class="num">22</td><td>Hika 6</td><td class="num">165</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td></tr></tbody>
   </table>
   </div>
   
-  <div class="changes">
-    <div class="changes-title">Member Changes (last 72h)</div>
-    <div class="changes-cols">
-      <div class="changes-col">
-        <div class="changes-head left">Left (0)</div>
-        <ul></ul>
-      </div>
-      <div class="changes-col">
-        <div class="changes-head joined">Joined (5)</div>
-        <ul><li>Hika 2</li><li>Hika 3</li><li>Hika 4</li><li>Hika 5</li><li>Hika 6</li></ul>
-      </div>
-    </div>
-  </div>
   <div class="footer">
     <div class="footer-updated" id="updated-ago"></div>
-    Snapshot: <span id="snapshot-ts">2026-07-24 10:31:00</span>
-    <div class="ref">Ref (30m): 2026-07-24 10:01:00 &middot; Ref (hourly): 2026-07-24 09:31:00 &middot; Ref (daily): 2026-07-23 13:31:00</div>
+    Snapshot: <span id="snapshot-ts">2026-07-24 14:07:51</span>
+    <div class="ref">Ref (daily): 2026-07-23 13:31:00</div>
     <div class="footer-csv"><a id="csv-link">Download CSV</a></div>
   </div>
 </div>
 <script>
 (function() {
   var end = new Date("2026-08-09T04:59:59Z").getTime();
-  function tick() {
+  function tick() {{
     var diff = end - new Date().getTime();
-    if (diff <= 0) { document.getElementById("timer-d").textContent = "0"; document.getElementById("timer-h").textContent = "00"; document.getElementById("timer-m").textContent = "00"; document.getElementById("timer-s").textContent = "00"; return; }
+    if (diff <= 0) {{ document.getElementById("timer-d").textContent = "0"; document.getElementById("timer-h").textContent = "00"; document.getElementById("timer-m").textContent = "00"; document.getElementById("timer-s").textContent = "00"; return; }}
     document.getElementById("timer-d").textContent = Math.floor(diff / 86400000);
     document.getElementById("timer-h").textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,"0");
     document.getElementById("timer-m").textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,"0");
     document.getElementById("timer-s").textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,"0");
-  }
+  }}
   tick();
   setInterval(tick, 1000);
-})();
-window.__goalTiers = [[100000,"5 Stamina Rolls"],[500000,"20 Stamina Rolls"],[750000,"Back Item"],[1000000,"Weapon"],[1600000,"Jutsu"]];
+}})();
+window.__goalTiers = [[100000, "5 Stamina Rolls"], [500000, "20 Stamina Rolls"], [750000, "Back Item"], [1000000, "Weapon"], [1600000, "Jutsu"]];
 window.__avgDaily = 30000;
 window.__seasonEnd = "2026-08-09T04:59:59Z";
-window.__hourlyCache = {"OROCHIMARU": 0, "Mahsuri": 11285, "Parameswara": 10085, "Hang Tuah": 8558, "Mahawangsa": 7865, "Tun Teja": 8070, "Elavoth": 11018, "Dracoth": 9965, "Summoth": 8998, "Maximoth": 8005, "Shadow": 10996, "Assassin": 9962, "Zenith": 8725, "Astraphel": 8325, "Noir": 8034, "Deucedrag": 0, "Heracoth": 7749};
-window.__30mCache = {"OROCHIMARU": 0, "Mahsuri": 11335, "Parameswara": 10130, "Hang Tuah": 8583, "Mahawangsa": 7890, "Tun Teja": 8095, "Elavoth": 11068, "Dracoth": 10015, "Summoth": 9023, "Maximoth": 8030, "Shadow": 11046, "Assassin": 10012, "Zenith": 8750, "Astraphel": 8350, "Noir": 8059, "Deucedrag": 0, "Heracoth": 7774};
-(function() {
+window.__hourlyCache = {};
+window.__30mCache = {};
+(function() {{
   var tbody = document.querySelector("tbody");
   window.__originalRows = tbody.innerHTML;
   window.__defaultRows = tbody.innerHTML;
   var sortCol = -1, sortDir = 0;
   var ths = document.querySelectorAll("th");
-  function applySort() {
-    if (sortDir === 0) { tbody.innerHTML = window.__originalRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; if (window.__refreshData) window.__refreshData(); var se = document.getElementById("search-input"); if(se&&se.value){var q=se.value.toLowerCase(),rr=tbody.querySelectorAll("tr");for(var ri=0;ri<rr.length;ri++)rr[ri].style.display=rr[ri].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";} return; }
+  function applySort() {{
+    if (sortDir === 0) {{ tbody.innerHTML = window.__originalRows; for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = ""; if (window.__refreshData) window.__refreshData(); var se = document.getElementById("search-input"); if(se&&se.value){{var q=se.value.toLowerCase(),rr=tbody.querySelectorAll("tr");for(var ri=0;ri<rr.length;ri++)rr[ri].style.display=rr[ri].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";}} return; }}
     for (var a = 0; a < ths.length; a++) ths[a].querySelector(".sort-arrow").textContent = "";
     ths[sortCol].querySelector(".sort-arrow").textContent = sortDir === 1 ? "\u25B2" : "\u25BC";
     var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
-    rows.sort(function(a, b) {
+    rows.sort(function(a, b) {{
       var va = a.cells[sortCol].textContent.trim(), vb = b.cells[sortCol].textContent.trim();
       if (sortCol === 1) return sortDir === 1 ? va.localeCompare(vb) : vb.localeCompare(va);
       var na = parseFloat(va) || -1/0, nb = parseFloat(vb) || -1/0;
       return sortDir === 1 ? na - nb : nb - na;
-    });
+    }});
     for (var r = 0; r < rows.length; r++) tbody.appendChild(rows[r]);
     var sr = tbody.querySelectorAll("tr");
     for (var ri = 0; ri < sr.length; ri++) sr[ri].cells[0].textContent = ri + 1;
-  }
-  window.__resetSort = function() { sortCol = -1; sortDir = 0; applySort(); };
-  for (var i = 0; i < ths.length; i++) (function(col) {
-    ths[col].addEventListener("click", function() {
-      if (sortCol !== col) { sortCol = col; sortDir = 1; }
-      else { sortDir = (sortDir + 1) % 3; }
+  }}
+  window.__resetSort = function() {{ sortCol = -1; sortDir = 0; applySort(); }};
+  for (var i = 0; i < ths.length; i++) (function(col) {{
+    ths[col].addEventListener("click", function() {{
+      if (sortCol !== col) {{ sortCol = col; sortDir = 1; }}
+      else {{ sortDir = (sortDir + 1) % 3; }}
       applySort();
-      localStorage.setItem("nr_sort", JSON.stringify({col: sortCol, dir: sortDir}));
-    });
-  })(i);
-  try { var _s = JSON.parse(localStorage.getItem("nr_sort")); if (_s && _s.dir > 0) { sortCol = _s.col; sortDir = _s.dir; applySort(); } } catch(e) {}
-})();
-(function() {
+      localStorage.setItem("nr_sort", JSON.stringify({{col: sortCol, dir: sortDir}}));
+    }});
+  }})(i);
+  try {{ var _s = JSON.parse(localStorage.getItem("nr_sort")); if (_s && _s.dir > 0) {{ sortCol = _s.col; sortDir = _s.dir; applySort(); }} }} catch(e) {{}}
+}})();
+(function() {{
   var API = "https://playninjarift.com/api/detail_clan_website.php?clan_id=2527", RK = "https://playninjarift.com/api/clan_ranking_website.php";
   var tb = document.querySelector("tbody"), names = [], rws = tb.querySelectorAll("tr");
   for (var i = 0; i < rws.length; i++) names.push(rws[i].cells[1].textContent.trim());
   var autoSeconds = 60, autoEl = document.getElementById("auto-seconds"), searchEl = document.getElementById("search-input"), dotEl = document.getElementById("status-dot"), statusEl = document.getElementById("status-text");
-  if (window.__hourlyCache && Object.keys(window.__hourlyCache).length > 0) { var _ts = ts(), _m = String(new Date().getMinutes()), _b = _m <= "1" ? "01" : (_m >= "31" && _m <= "32" ? "31" : _m); localStorage.setItem("nr_1h", JSON.stringify({b: _b, ts: _ts, rs: window.__hourlyCache})); }
-  if (window.__30mCache && Object.keys(window.__30mCache).length > 0) { var _b30 = (new Date().getMinutes() <= 1 ? "01" : "31"); localStorage.setItem("nr_30m", JSON.stringify({b: _b30, ts: _ts, rs: window.__30mCache})); }
-  function pad(n) { return n < 10 ? "0"+n : ""+n; }
-  function ts() { var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
-  function fj(u) { return fetch(u,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).catch(function(){return null;}); }
-  function dh(v) { return v > 0 ? '<span class="up">+'+v+"</span>" : v <= 0 ? '<span class="down">'+v+"</span>" : '<span class="na">N/A</span>'; }
-  function blk30(m) { return m <= 1 ? "01" : (m >= 31 && m <= 32 ? "31" : null); }
-  function blk1h(m) { return m <= 1 ? "01" : null; }
-  function upd(d, rk) {
+  if (window.__hourlyCache && Object.keys(window.__hourlyCache).length > 0) {{ var _ts = ts(), _m = String(new Date().getMinutes()), _b = _m <= "1" ? "01" : (_m >= "31" && _m <= "32" ? "31" : _m); localStorage.setItem("nr_1h", JSON.stringify({{b: _b, ts: _ts, rs: window.__hourlyCache}})); }}
+  if (window.__30mCache && Object.keys(window.__30mCache).length > 0) {{ var _b30 = (new Date().getMinutes() <= 1 ? "01" : "31"); localStorage.setItem("nr_30m", JSON.stringify({{b: _b30, ts: _ts, rs: window.__30mCache}})); }}
+  function pad(n) {{ return n < 10 ? "0"+n : ""+n; }}
+  function ts() {{ var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }}
+  function fj(u) {{ return fetch(u,{{headers:{{"Accept":"application/json"}}}}).then(function(r){{return r.json();}}).catch(function(){{return null;}}); }}
+  function dh(v) {{ return v > 0 ? '<span class="up">+'+v+"</span>" : v <= 0 ? '<span class="down">'+v+"</span>" : '<span class="na">N/A</span>'; }}
+  function blk30(m) {{ return m <= 1 ? "01" : (m >= 31 && m <= 32 ? "31" : null); }}
+  function blk1h(m) {{ return m <= 1 ? "01" : null; }}
+  function upd(d, rk) {{
     autoSeconds = 60;
     var clan = null;
-    if (rk) {
-      if (Array.isArray(rk)) {
-        for (var ci = 0; ci < rk.length; ci++) {
-          if (rk[ci].clan_id === 2527) { clan = rk[ci]; break; }
-        }
-      } else { clan = rk; }
-    }
+    if (rk) {{
+      if (Array.isArray(rk)) {{
+        for (var ci = 0; ci < rk.length; ci++) {{
+          if (rk[ci].clan_id === 2527) {{ clan = rk[ci]; break; }}
+        }}
+      }} else {{ clan = rk; }}
+    }}
     var n = new Date(), nm = n.getMinutes(), ns = ts();
-    var lm = {}; for (var i = 0; i < d.length; i++) lm[i < names.length ? names[i] : d[i].character_name] = d[i].member_reputation;
-    var n2r = {}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
-    var c30 = null, c1h = null; try { c30 = JSON.parse(localStorage.getItem("nr_30m")); c1h = JSON.parse(localStorage.getItem("nr_1h")); } catch(e) {}
-    if (!c1h && window.__hourlyCache) c1h = {rs: window.__hourlyCache, ts: ""};
-    for (var i = 0; i < names.length; i++) {
+    var lm = {{}}; for (var i = 0; i < d.length; i++) lm[i < names.length ? names[i] : d[i].character_name] = d[i].member_reputation;
+    var n2r = {{}}, a = tb.querySelectorAll("tr"); for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
+    var c30 = null, c1h = null; try {{ c30 = JSON.parse(localStorage.getItem("nr_30m")); c1h = JSON.parse(localStorage.getItem("nr_1h")); }} catch(e) {{}}
+    if (!c1h && window.__hourlyCache) c1h = {{rs: window.__hourlyCache, ts: ""}};
+    for (var i = 0; i < names.length; i++) {{
       var name = names[i], rep = lm[name]; if (rep === undefined) continue;
       var row = n2r[name]; if (!row) continue;
       var cel = row.cells;
       cel[2].textContent = rep;
       if (c30 && c30.rs && c30.rs[name] !== undefined) cel[3].innerHTML = dh(rep - c30.rs[name]);
       if (c1h && c1h.rs && c1h.rs[name] !== undefined) cel[4].innerHTML = dh(rep - c1h.rs[name]);
-    }
-    for (var _n in lm) {
-      if (names.indexOf(_n) === -1) {
+    }}
+    for (var _n in lm) {{
+      if (names.indexOf(_n) === -1) {{
         names.push(_n);
         var tr = document.createElement("tr");
         tr.className = "new-row";
         tr.innerHTML = '<td class="num"></td><td>' + _n + '</td><td class="num">' + lm[_n] + '</td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td><td class="num"><span class="na">N/A</span></td>';
         tb.appendChild(tr);
         if (searchEl && searchEl.value && _n.toLowerCase().indexOf(searchEl.value.toLowerCase()) === -1) tr.style.display = "none";
-      }
-    }
-    a = tb.querySelectorAll("tr"); n2r = {};
+      }}
+    }}
+    a = tb.querySelectorAll("tr"); n2r = {{}};
     for (var i = 0; i < a.length; i++) n2r[a[i].cells[1].textContent.trim()] = a[i];
-    for (var i = 0; i < names.length; i++) {
+    for (var i = 0; i < names.length; i++) {{
       var row = n2r[names[i]];
       if (row && lm[names[i]] === undefined) row.className = "left-row";
-    }
-    if (clan) {
+    }}
+    if (clan) {{
       var te = document.getElementById("today-gain");
       if (te && clan.clan_day_points !== undefined) te.textContent = "+"+Number(clan.clan_day_points).toLocaleString();
       var sv = document.querySelectorAll(".stats-col .stat-val");
       if (sv.length >= 2 && clan.clan_reputation !== undefined) sv[1].textContent = Number(clan.clan_reputation).toLocaleString();
-    }
+    }}
     var ft = document.querySelector(".footer");
     var st = document.getElementById("snapshot-ts"); if (st) st.textContent = ns;
-    var rs = {}; for (var i = 0; i < d.length; i++) rs[d[i].character_name] = d[i].member_reputation;
+    var rs = {{}}; for (var i = 0; i < d.length; i++) rs[d[i].character_name] = d[i].member_reputation;
     var b30 = blk30(nm), b1h = blk1h(nm);
-    if (b30 && (!c30 || c30.b !== b30)) localStorage.setItem("nr_30m", JSON.stringify({b: b30, ts: ns, rs: rs}));
-    if (b1h && (!c1h || c1h.b !== b1h)) localStorage.setItem("nr_1h", JSON.stringify({b: b1h, ts: ns, rs: rs}));
+    if (b30 && (!c30 || c30.b !== b30)) localStorage.setItem("nr_30m", JSON.stringify({{b: b30, ts: ns, rs: rs}}));
+    if (b1h && (!c1h || c1h.b !== b1h)) localStorage.setItem("nr_1h", JSON.stringify({{b: b1h, ts: ns, rs: rs}}));
     window.__defaultRows = tb.innerHTML;
     var sr = tb.querySelectorAll("tr");
     for (var ri = 0; ri < sr.length; ri++) sr[ri].cells[0].textContent = ri + 1;
-    if (clan && clan.clan_reputation !== undefined) {
+    if (clan && clan.clan_reputation !== undefined) {{
       var rep = Number(clan.clan_reputation), prev = 0, tiers = window.__goalTiers;
-      for (var ti = 0; ti < tiers.length; ti++) {
-        if (rep < tiers[ti][0]) {
+      for (var ti = 0; ti < tiers.length; ti++) {{
+        if (rep < tiers[ti][0]) {{
           var pct = ((rep - prev) / (tiers[ti][0] - prev)) * 100;
           var fel = document.querySelector(".goal-fill");
           var nel = document.querySelector(".goal-info .goal-num");
@@ -534,92 +521,88 @@ window.__30mCache = {"OROCHIMARU": 0, "Mahsuri": 11335, "Parameswara": 10130, "H
           if (nel) nel.textContent = rep.toLocaleString() + " / " + tiers[ti][0].toLocaleString();
           if (nel2) nel2.textContent = tiers[ti][1];
           break;
-        }
+        }}
         prev = tiers[ti][0];
-      }
-    }
-    if (clan && window.__avgDaily > 0 && window.__seasonEnd) {
+      }}
+    }}
+    if (clan && window.__avgDaily > 0 && window.__seasonEnd) {{
       var seEnd = new Date(window.__seasonEnd).getTime(), nowMs = new Date().getTime();
       var daysLeft = Math.ceil((seEnd - nowMs) / 86400000);
       if (daysLeft < 0) daysLeft = 0;
       var proj = Number(clan.clan_reputation);
       var cur = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 0, 0, 0, 0);
-      while (cur.getTime() <= seEnd) {
+      while (cur.getTime() <= seEnd) {{
         proj += cur.getDay() % 6 === 0 ? window.__avgDaily * 2 : window.__avgDaily;
         cur = new Date(cur.getTime() + 86400000);
-      }
+      }}
       var estEl = document.getElementById("est-season");
       var avgLabel = document.getElementById("avg-label");
       if (estEl) estEl.textContent = Math.round(proj).toLocaleString();
       if (avgLabel) avgLabel.textContent = "Avg/Day · " + daysLeft + "d left";
-    }
-  }
-  function refreshData() {
+    }}
+  }}
+  function refreshData() {{
     if (dotEl) dotEl.className = "status-dot wait";
     if (statusEl) statusEl.textContent = "Loading...";
-    Promise.all([fj(API), fj(RK)]).then(function(r) {
-      if (r[0] && r[0].members) {
+    Promise.all([fj(API), fj(RK)]).then(function(r) {{
+      if (r[0] && r[0].members) {{
         upd(r[0].members, r[1]);
         if (dotEl) dotEl.className = "status-dot ok";
         if (statusEl) statusEl.textContent = "Live";
-      } else {
+      }} else {{
         if (dotEl) dotEl.className = "status-dot err";
         if (statusEl) statusEl.textContent = "Offline";
-      }
-    });
-  }
+      }}
+    }});
+  }}
   window.__refreshData = refreshData;
   refreshData();
   setInterval(refreshData, 60000);
-  setInterval(function(){if(autoSeconds>0)autoSeconds--;if(autoEl)autoEl.textContent=autoSeconds;},1000);
-  if(autoEl)autoEl.parentElement.addEventListener("click",function(){autoSeconds=60;refreshData();});
-  if(searchEl)searchEl.addEventListener("input",function(){
+  setInterval(function(){{if(autoSeconds>0)autoSeconds--;if(autoEl)autoEl.textContent=autoSeconds;}},1000);
+  if(autoEl)autoEl.parentElement.addEventListener("click",function(){{autoSeconds=60;refreshData();}});
+  if(searchEl)searchEl.addEventListener("input",function(){{
     var q = this.value.toLowerCase(), r = tb.querySelectorAll("tr");
     for(var i=0;i<r.length;i++)r[i].style.display=r[i].cells[1].textContent.trim().toLowerCase().indexOf(q)>=0?"":"none";
-  });
-  // Click-to-copy (event delegation on tbody)
-  tb.addEventListener("click", function(e) {
+  }});
+  tb.addEventListener("click", function(e) {{
     var cell = e.target;
     while (cell && cell.tagName !== "TD") cell = cell.parentNode;
     if (!cell || cell.cellIndex !== 1) return;
     var name = cell.textContent.trim();
-    navigator.clipboard.writeText(name).then(function() {
+    navigator.clipboard.writeText(name).then(function() {{
       var toast = document.createElement("span");
       toast.className = "copied-toast";
       toast.textContent = "Copied!";
       toast.style.opacity = "1";
       cell.style.position = "relative";
       cell.appendChild(toast);
-      setTimeout(function() { toast.style.opacity = "0"; setTimeout(function() { toast.remove(); }, 300); }, 1500);
-    }).catch(function() {});
-  });
-  // Reset sort
+      setTimeout(function() {{ toast.style.opacity = "0"; setTimeout(function() {{ toast.remove(); }}, 300); }}, 1500);
+    }}).catch(function() {{}});
+  }});
   var resetBtn = document.getElementById("reset-btn");
-  if (resetBtn) resetBtn.addEventListener("click", function() {
+  if (resetBtn) resetBtn.addEventListener("click", function() {{
     localStorage.removeItem("nr_sort");
     if (window.__resetSort) window.__resetSort();
-  });
-  // CSV export
-  function csvDownload() {
+  }});
+  function csvDownload() {{
     var rows = tb.querySelectorAll("tr"), csv = "Rank,Name,Total Reps,1/2 Hour,Hourly,Daily\n";
-    for (var i = 0; i < rows.length; i++) {
+    for (var i = 0; i < rows.length; i++) {{
       var cells = rows[i].cells, vals = [];
-      for (var j = 0; j < cells.length; j++) {
+      for (var j = 0; j < cells.length; j++) {{
         var v = cells[j].textContent.trim().replace(/"/g, '""');
         vals.push('"' + v + '"');
-      }
+      }}
       csv += vals.join(",") + "\n";
-    }
-    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+    }}
+    var blob = new Blob([csv], {{type: "text/csv;charset=utf-8"}});
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
-    a.href = url; a.download = "clairvoyant_reps.csv"; a.click();
+    a.href = url; a.download = "reps.csv"; a.click();
     URL.revokeObjectURL(url);
-  }
+  }}
   var csvLink = document.getElementById("csv-link");
   if (csvLink) csvLink.addEventListener("click", csvDownload);
-  // Updated ago
-  function updateAgo() {
+  function updateAgo() {{
     var st = document.getElementById("snapshot-ts");
     var ua = document.getElementById("updated-ago");
     if (!st || !ua) return;
@@ -630,10 +613,10 @@ window.__30mCache = {"OROCHIMARU": 0, "Mahsuri": 11335, "Parameswara": 10130, "H
     var now = new Date().getTime();
     var diff = Math.floor((now - snap) / 60000);
     ua.textContent = "Updated " + (diff < 1 ? "just now" : diff + "m ago");
-  }
+  }}
   updateAgo();
   setInterval(updateAgo, 30000);
-})();
+}})();
 </script>
 </body>
 </html>
