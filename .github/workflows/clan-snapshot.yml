@@ -21,6 +21,8 @@ jobs:
       - uses: nixervo/clan-snapshot-action@beta
         with:
           clan-id: 2527
+          accent-color: '#e94560'
+          accent-light: '#ff6b8a'
 
       - run: |
           git config user.name "clan-snapshot-bot"
