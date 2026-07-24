@@ -2,12 +2,8 @@ name: Clan Snapshot
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "1,31 * * * *"
   workflow_dispatch:
-
-concurrency:
-  group: clan-snapshot
-  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -15,16 +11,20 @@ permissions:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 4320
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - run: pip install openpyxl
+      - uses: nixervo/clan-snapshot-action@v1
+        with:
+          clan-id: 2527
 
-      - run: python clan_snapshot.py
+      - run: |
+          git config user.name "clan-snapshot-bot"
+          git config user.email "bot@clan-snapshot.local"
+          git add -A
+          git commit -m "auto: snapshot $(date -u '+%Y-%m-%d %H:%M:%S')" --allow-empty
+          git push
