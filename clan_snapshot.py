@@ -1143,11 +1143,7 @@ def save_snapshot(data):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 hist_data = json.loads(resp.read().decode())
             save_seasonal_xlsx(hist_data["members"], last_season)
-            if is_daily:
-                data["members"] = hist_data["members"]
-                print(f"Season {last_season} -> {current_season}: using history API for final reps")
-            else:
-                print(f"Season {last_season} -> {current_season}: saved seasonal XLSX for season {last_season}")
+            print(f"Season {last_season} -> {current_season}: saved seasonal XLSX for season {last_season}")
             transition_detected = True
         except Exception as e:
             print(f"History API error: {e}")
@@ -1297,7 +1293,8 @@ def save_daily_history():
         curr_set = {name for name, _ in curr["members"]}
         total_prev = sum(prev_map.values())
         total_curr = sum(rep for _, rep in curr["members"])
-        is_new_season = total_prev > 0 and total_curr < total_prev * 0.05
+        is_new_season = (total_prev > 0 and total_curr < total_prev * 0.05) or \
+                        (curr.get("season") is not None and prev.get("season") is not None and curr["season"] != prev["season"])
         gains = []
         if is_new_season:
             for name, rep in curr["members"]:
