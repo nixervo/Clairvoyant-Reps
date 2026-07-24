@@ -1,35 +1,18 @@
 name: Clan Snapshot
-
-on:
-  schedule:
-    - cron: "1,31 * * * *"
-  workflow_dispatch:
-
+on: [workflow_dispatch]
 permissions:
   contents: write
   actions: write
-
 jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - uses: nixervo/clan-snapshot-action@beta
         with:
           clan-id: 2527
           accent-color: '#e94560'
           accent-light: '#ff6b8a'
-
-      - run: |
-          git config user.name "clan-snapshot-bot"
-          git config user.email "bot@clan-snapshot.local"
-          git add -A
-          git commit -m "auto: snapshot $(date -u '+%Y-%m-%d %H:%M:%S')" --allow-empty
-          git push
-          sleep 1800
-          gh workflow run "Clan Snapshot" --repo ${{ github.repository }}
