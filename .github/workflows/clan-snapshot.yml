@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - uses: nixervo/clan-snapshot-action@v1
+      - uses: nixervo/clan-snapshot-action@beta
         with:
           clan-id: 2527
 
